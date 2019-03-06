@@ -304,17 +304,29 @@ describe('interpreter', () => {
     );
   });
 
-  it('should throw an error if an event is sent to an uninitialized interpreter', () => {
+  it('should throw an error if an event is sent to an uninitialized interpreter', async () => {
     const service = interpret(lightMachine, { clock: new SimulatedClock() });
 
-    assert.throws(() => service.send('SOME_EVENT'));
+    let error;
+    try {
+      service.send('SOME_EVENT');
+    } catch (err) {
+      error = err;
+    }
+    assert.isDefined(error);
+    error = undefined;
 
-    service.start();
+    await service.start();
 
-    assert.doesNotThrow(() => service.send('SOME_EVENT'));
+    try {
+      service.send('SOME_EVENT');
+    } catch (err) {
+      error = err;
+    }
+    assert.isUndefined(error);
   });
 
-  it('should throw an error if initial state sent to interpreter is invalid', () => {
+  it('should throw an error if initial state sent to interpreter is invalid', async () => {
     const invalidMachine = {
       id: 'fetchMachine',
       initial: 'create',
@@ -333,10 +345,13 @@ describe('interpreter', () => {
     };
 
     const service = interpret(Machine(invalidMachine));
-    assert.throws(
-      () => service.start(),
-      `Initial state 'create' not found on 'fetchMachine'`
-    );
+    let error;
+    try {
+      await service.start();
+    } catch (err) {
+      error = err;
+    }
+    assert.isDefined(error);
   });
 
   it('should not update when stopped', async () => {

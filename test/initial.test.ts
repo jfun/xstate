@@ -62,6 +62,12 @@ describe('Initial states', () => {
   });
 
   it('should return undefined for leaf nodes', () => {
-    assert.throws(() => deepMachine.states.leaf.initialState);
+    let error;
+    try {
+      deepMachine.states.leaf.initialState;
+    } catch (err) {
+      error = err;
+    }
+    assert.isDefined(error);
   });
 });

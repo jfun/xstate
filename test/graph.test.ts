@@ -426,8 +426,14 @@ describe('graph utilities', () => {
       );
     });
 
-    it('should not throw when a condition is present', () => {
-      assert.doesNotThrow(async () => await getShortestValuePaths(condMachine));
+    it('should not throw when a condition is present', async () => {
+      let error;
+      try {
+        await getShortestValuePaths(condMachine);
+      } catch (err) {
+        error = err;
+      }
+      assert.isUndefined(error);
     });
 
     it('should represent conditional paths based on context', async () => {
@@ -755,10 +761,10 @@ describe('graph utilities', () => {
     });
 
     it('should return a single empty path for the initial state', async () => {
-      assert.deepEqual(await getSimplePaths(lightMachine)['"green"'].paths, [
+      assert.deepEqual((await getSimplePaths(lightMachine))['"green"'].paths, [
         []
       ]);
-      assert.deepEqual(await getSimplePaths(equivMachine)['"a"'].paths, [[]]);
+      assert.deepEqual((await getSimplePaths(equivMachine))['"a"'].paths, [[]]);
     });
 
     it('should return value-based paths', async () => {
@@ -997,7 +1003,7 @@ describe('graph utilities', () => {
   });
 
   describe('valueAdjacencyMap', () => {
-    it('should map adjacencies', () => {
+    it('should map adjacencies', async () => {
       const counterMachine = Machine({
         id: 'counter',
         initial: 'empty',
@@ -1025,6 +1031,7 @@ describe('graph utilities', () => {
           INC: [{ type: 'INC', value: 1 }]
         }
       });
+      await adjacency.setup();
 
       assert.ok(adjacency.reaches('full', { count: 5 }));
     });

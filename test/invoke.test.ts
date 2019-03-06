@@ -921,9 +921,13 @@ describe('invoke', () => {
         'GO_TO_WAITING'
       );
 
-      assert.doesNotThrow(() => {
+      let error;
+      try {
         JSON.stringify(waitingState);
-      });
+      } catch (err) {
+        error = err;
+      }
+      assert.isUndefined(error);
 
       assert.isString(waitingState.actions[0].activity!.src);
     });

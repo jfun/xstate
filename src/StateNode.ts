@@ -593,11 +593,12 @@ class StateNode<
     const noTransitionKeys: string[] = [];
     const transitionMap: Record<string, StateTransition<TContext, TEvent>> = {};
 
-    keys(stateValue).forEach(async subStateKey => {
+    // keys(stateValue).forEach(async subStateKey => {
+    for (const subStateKey of keys(stateValue)) {
       const subStateValue = stateValue[subStateKey];
 
       if (!subStateValue) {
-        return;
+        break;
       }
 
       const subStateNode = this.getStateNode(subStateKey);
@@ -613,7 +614,7 @@ class StateNode<
       }
 
       transitionMap[subStateKey] = next;
-    });
+    }
 
     const willTransition = keys(transitionMap).some(
       key => transitionMap[key].tree !== undefined
