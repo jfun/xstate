@@ -14,7 +14,7 @@ describe('patterns', () => {
   });
 
   describe('sequence pattern', () => {
-    it('should work with an array', () => {
+    it('should work with an array', async () => {
       const seq = ['one', 'two', 'three', 'last'];
 
       const sequenceMachine = Machine({
@@ -23,27 +23,27 @@ describe('patterns', () => {
       });
 
       assert.deepEqual(
-        sequenceMachine.transition(seq[0], 'NEXT').value,
+        (await sequenceMachine.transition(seq[0], 'NEXT')).value,
         seq[1]
       );
 
       assert.deepEqual(
-        sequenceMachine.transition(seq[1], 'PREV').value,
+        (await sequenceMachine.transition(seq[1], 'PREV')).value,
         seq[0]
       );
 
       assert.deepEqual(
-        sequenceMachine.transition(seq[seq.length - 1], 'NEXT').value,
+        (await sequenceMachine.transition(seq[seq.length - 1], 'NEXT')).value,
         seq[seq.length - 1]
       );
 
       assert.deepEqual(
-        sequenceMachine.transition(seq[0], 'PREV').value,
+        (await sequenceMachine.transition(seq[0], 'PREV')).value,
         seq[0]
       );
     });
 
-    it('should customize the next/prev events', () => {
+    it('should customize the next/prev events', async () => {
       const seq = ['one', 'two', 'three', 'last'];
 
       const sequenceMachine = Machine({
@@ -55,27 +55,27 @@ describe('patterns', () => {
       });
 
       assert.deepEqual(
-        sequenceMachine.transition(seq[0], 'NEXT').value,
+        (await sequenceMachine.transition(seq[0], 'NEXT')).value,
         seq[0]
       );
 
       assert.deepEqual(
-        sequenceMachine.transition(seq[1], 'PREV').value,
+        (await sequenceMachine.transition(seq[1], 'PREV')).value,
         seq[1]
       );
 
       assert.deepEqual(
-        sequenceMachine.transition(seq[0], 'FORWARD').value,
+        (await sequenceMachine.transition(seq[0], 'FORWARD')).value,
         seq[1]
       );
 
       assert.deepEqual(
-        sequenceMachine.transition(seq[1], 'BACK').value,
+        (await sequenceMachine.transition(seq[1], 'BACK')).value,
         seq[0]
       );
     });
 
-    it('should allow next/prev events to be undefined', () => {
+    it('should allow next/prev events to be undefined', async () => {
       const seq = ['one', 'two', 'three', 'last'];
 
       const sequenceMachine = Machine({
@@ -87,12 +87,12 @@ describe('patterns', () => {
       });
 
       assert.deepEqual(
-        sequenceMachine.transition(seq[0], 'FORWARD').value,
+        (await sequenceMachine.transition(seq[0], 'FORWARD')).value,
         seq[1]
       );
 
       assert.deepEqual(
-        sequenceMachine.transition(seq[1], 'BACK').value,
+        (await sequenceMachine.transition(seq[1], 'BACK')).value,
         seq[1]
       );
 
@@ -105,12 +105,12 @@ describe('patterns', () => {
       });
 
       assert.deepEqual(
-        backSequenceMachine.transition(seq[0], 'FORWARD').value,
+        (await backSequenceMachine.transition(seq[0], 'FORWARD')).value,
         seq[0]
       );
 
       assert.deepEqual(
-        backSequenceMachine.transition(seq[1], 'BACK').value,
+        (await backSequenceMachine.transition(seq[1], 'BACK')).value,
         seq[0]
       );
     });

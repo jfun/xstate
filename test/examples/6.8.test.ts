@@ -68,10 +68,10 @@ describe('Example 6.8', () => {
 
   testAll(machine, expected);
 
-  it('should respect the history mechanism', () => {
-    const stateC = machine.transition('A.B', '1');
-    const stateF = machine.transition(stateC, '6');
-    const stateActual = machine.transition(stateF, '5');
+  it('should respect the history mechanism', async () => {
+    const stateC = await machine.transition('A.B', '1');
+    const stateF = await machine.transition(stateC, '6');
+    const stateActual = await machine.transition(stateF, '5');
 
     assert.deepEqual(stateActual.value, { A: 'C' });
   });

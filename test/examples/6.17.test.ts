@@ -57,8 +57,12 @@ describe('Example 6.17', () => {
 
       it(`should go from ${fromState} to ${JSON.stringify(
         toState
-      )} on ${eventTypes}`, () => {
-        const resultState = testMultiTransition(machine, fromState, eventTypes);
+      )} on ${eventTypes}`, async () => {
+        const resultState = await testMultiTransition(
+          machine,
+          fromState,
+          eventTypes
+        );
 
         assert.deepEqual(resultState.value, toState);
       });
@@ -122,8 +126,12 @@ describe('Jump to ID', () => {
 
       it(`should go from ${fromState} to ${JSON.stringify(
         toState
-      )} on ${eventTypes}`, () => {
-        const resultState = testMultiTransition(machine, fromState, eventTypes);
+      )} on ${eventTypes}`, async () => {
+        const resultState = await testMultiTransition(
+          machine,
+          fromState,
+          eventTypes
+        );
 
         assert.deepEqual(resultState.value, toState);
       });

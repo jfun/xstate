@@ -2,20 +2,20 @@ import { StateNode, State } from '../src/index';
 import { assert } from 'chai';
 import { matchesState } from '../lib';
 
-export function testMultiTransition<TExt>(
+export async function testMultiTransition<TExt>(
   machine: StateNode<TExt>,
   fromState: string,
   eventTypes: string
 ) {
-  const resultState = eventTypes
+  const resultState = (await eventTypes
     .split(/,\s?/)
-    .reduce((state: State<TExt> | string, eventType) => {
+    .reduce(async (state: Promise<State<TExt> | string>, eventType) => {
       if (typeof state === 'string' && state[0] === '{') {
         state = JSON.parse(state);
       }
-      const nextState = machine.transition(state, eventType);
+      const nextState = await machine.transition(await state, eventType);
       return nextState;
-    }, fromState) as State<TExt>;
+    }, Promise.resolve(fromState))) as State<TExt>;
 
   return resultState;
 }
@@ -27,8 +27,12 @@ export function testAll(machine: StateNode, expected: {}): void {
 
       it(`should go from ${fromState} to ${JSON.stringify(
         toState
-      )} on ${eventTypes}`, () => {
-        const resultState = testMultiTransition(machine, fromState, eventTypes);
+      )} on ${eventTypes}`, async () => {
+        const resultState = await testMultiTransition(
+          machine,
+          fromState,
+          eventTypes
+        );
 
         if (toState === undefined) {
           // undefined means that the state didn't transition

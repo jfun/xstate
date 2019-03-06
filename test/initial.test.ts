@@ -38,19 +38,22 @@ const deepParallelMachine = Machine({
 });
 
 describe('Initial states', () => {
-  it('should return the correct initial state', () => {
-    assert.deepEqual(deepMachine.initialState.value, { a: { b: 'c' } });
+  it('should return the correct initial state', async () => {
+    const initialState = await deepMachine.initialState;
+    assert.deepEqual(initialState.value, { a: { b: 'c' } });
   });
 
-  it('should return the correct initial state (parallel)', () => {
-    assert.deepEqual(parallelDeepMachine.initialState.value, {
+  it('should return the correct initial state (parallel)', async () => {
+    const initialState = await parallelDeepMachine.initialState;
+    assert.deepEqual(initialState.value, {
       foo: { a: { b: 'c' } },
       bar: { a: { b: 'c' } }
     });
   });
 
-  it('should return the correct initial state (deep parallel)', () => {
-    assert.deepEqual(deepParallelMachine.initialState.value, {
+  it('should return the correct initial state (deep parallel)', async () => {
+    const initialState = await deepParallelMachine.initialState;
+    assert.deepEqual(initialState.value, {
       one: {
         foo: { a: { b: 'c' } },
         bar: { a: { b: 'c' } }

@@ -457,8 +457,8 @@ const nestedParallelState = Machine({
 });
 
 describe('parallel states', () => {
-  it('should have initial parallel states', () => {
-    const { initialState } = wordMachine;
+  it('should have initial parallel states', async () => {
+    const initialState = await wordMachine.initialState;
 
     assert.deepEqual(initialState.value, {
       bold: 'off',
@@ -512,8 +512,8 @@ describe('parallel states', () => {
 
       it(`should go from ${fromState} to ${JSON.stringify(
         toState
-      )} on ${eventTypes}`, () => {
-        const resultState = testMultiTransition(
+      )} on ${eventTypes}`, async () => {
+        const resultState = await testMultiTransition(
           wordMachine,
           fromState,
           eventTypes
@@ -524,29 +524,36 @@ describe('parallel states', () => {
     });
   });
 
-  it('should have all parallel states represented in the state value', () => {
-    const nextState = wakMachine.transition(wakMachine.initialState, 'WAK1');
+  it('should have all parallel states represented in the state value', async () => {
+    const nextState = await wakMachine.transition(
+      await wakMachine.initialState,
+      'WAK1'
+    );
 
     assert.deepEqual(nextState.value, { wak1: 'wak1sonB', wak2: 'wak2sonA' });
   });
 
-  it('should have all parallel states represented in the state value (2)', () => {
-    const nextState = wakMachine.transition(wakMachine.initialState, 'WAK2');
+  it('should have all parallel states represented in the state value (2)', async () => {
+    const nextState = await wakMachine.transition(
+      await wakMachine.initialState,
+      'WAK2'
+    );
 
     assert.deepEqual(nextState.value, { wak1: 'wak1sonA', wak2: 'wak2sonB' });
   });
 
-  it('should work with regions without states', () => {
-    assert.deepEqual(flatParallelMachine.initialState.value, {
+  it('should work with regions without states', async () => {
+    const initialState = await flatParallelMachine.initialState;
+    assert.deepEqual(initialState.value, {
       foo: {},
       bar: {},
       baz: 'one'
     });
   });
 
-  it('should work with regions without states', () => {
-    const nextState = flatParallelMachine.transition(
-      flatParallelMachine.initialState,
+  it('should work with regions without states', async () => {
+    const nextState = await flatParallelMachine.transition(
+      await flatParallelMachine.initialState,
       'E'
     );
     assert.deepEqual(nextState.value, {
@@ -556,9 +563,9 @@ describe('parallel states', () => {
     });
   });
 
-  it('should properly transition to relative substate', () => {
-    const nextState = composerMachine.transition(
-      composerMachine.initialState,
+  it('should properly transition to relative substate', async () => {
+    const nextState = await composerMachine.transition(
+      await composerMachine.initialState,
       'singleClickActivity'
     );
 
@@ -572,8 +579,9 @@ describe('parallel states', () => {
     });
   });
 
-  it('should properly transition according to onEntry events on an initial state', () => {
-    assert.deepEqual(raisingParallelMachine.initialState.value, {
+  it('should properly transition according to onEntry events on an initial state', async () => {
+    const initialState = await raisingParallelMachine.initialState;
+    assert.deepEqual(initialState.value, {
       OUTER1: 'C',
       OUTER2: {
         INNER1: 'OFF',
@@ -582,9 +590,9 @@ describe('parallel states', () => {
     });
   });
 
-  it('should properly transition when raising events for a parallel state', () => {
-    const nextState = raisingParallelMachine.transition(
-      raisingParallelMachine.initialState,
+  it('should properly transition when raising events for a parallel state', async () => {
+    const nextState = await raisingParallelMachine.transition(
+      await raisingParallelMachine.initialState,
       'EVENT_OUTER1_B'
     );
 
@@ -597,19 +605,19 @@ describe('parallel states', () => {
     });
   });
 
-  describe('transitions with nested parallel states', () => {
-    const initialState = nestedParallelState.initialState;
-    const simpleNextState = nestedParallelState.transition(
+  describe('transitions with nested parallel states', async () => {
+    const initialState = await nestedParallelState.initialState;
+    const simpleNextState = await nestedParallelState.transition(
       initialState,
       'EVENT_SIMPLE'
     );
-    const complexNextState = nestedParallelState.transition(
+    const complexNextState = await nestedParallelState.transition(
       initialState,
       'EVENT_COMPLEX'
     );
 
-    it('should properly transition when in a simple nested state', () => {
-      const nextState = nestedParallelState.transition(
+    it('should properly transition when in a simple nested state', async () => {
+      const nextState = await nestedParallelState.transition(
         simpleNextState,
         'EVENT_STATE_NTJ0_WORK'
       );
@@ -625,8 +633,8 @@ describe('parallel states', () => {
       });
     });
 
-    it('should properly transition when in a complex nested state', () => {
-      const nextState = nestedParallelState.transition(
+    it('should properly transition when in a complex nested state', async () => {
+      const nextState = await nestedParallelState.transition(
         complexNextState,
         'EVENT_STATE_NTJ0_WORK'
       );
@@ -671,8 +679,11 @@ describe('parallel states', () => {
       }
     });
 
-    it('should represent the flat nested parallel states in the state value', () => {
-      const result = machine.transition(machine.initialState, 'to-B');
+    it('should represent the flat nested parallel states in the state value', async () => {
+      const result = await machine.transition(
+        await machine.initialState,
+        'to-B'
+      );
 
       assert.deepEqual(result.value, {
         B: {

@@ -105,7 +105,7 @@ async function runTestToCompletion(
     )
   );
   let nextState: State<any> = machine.getInitialState(resolvedStateValue);
-  const service = interpret(machine, {
+  const service = await interpret(machine, {
     clock: new SimulatedClock()
   })
     .onTransition(state => {
@@ -115,9 +115,9 @@ async function runTestToCompletion(
     })
     .start(nextState);
 
-  test.events.forEach(({ event, nextConfiguration, after }, i) => {
+  test.events.forEach(async ({ event, nextConfiguration, after }, i) => {
     if (after) {
-      (service.clock as SimulatedClock).increment(after);
+      ((await service).clock as SimulatedClock).increment(after);
     }
     service.send(event.name);
 

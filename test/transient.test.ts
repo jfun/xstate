@@ -51,38 +51,54 @@ describe('transient states (eventless transitions)', () => {
     }
   });
 
-  it('should choose the first candidate target that matches the cond (D)', () => {
-    const nextState = updateMachine.transition('G', 'UPDATE_BUTTON_CLICKED', {
-      data: false
-    });
+  it('should choose the first candidate target that matches the cond (D)', async () => {
+    const nextState = await updateMachine.transition(
+      'G',
+      'UPDATE_BUTTON_CLICKED',
+      {
+        data: false
+      }
+    );
     assert.equal(nextState.value, 'D');
   });
 
-  it('should choose the first candidate target that matches the cond (B)', () => {
-    const nextState = updateMachine.transition('G', 'UPDATE_BUTTON_CLICKED', {
-      data: true,
-      status: 'Y'
-    });
+  it('should choose the first candidate target that matches the cond (B)', async () => {
+    const nextState = await updateMachine.transition(
+      'G',
+      'UPDATE_BUTTON_CLICKED',
+      {
+        data: true,
+        status: 'Y'
+      }
+    );
     assert.equal(nextState.value, 'B');
   });
 
-  it('should choose the first candidate target that matches the cond (C)', () => {
-    const nextState = updateMachine.transition('G', 'UPDATE_BUTTON_CLICKED', {
-      data: true,
-      status: 'X'
-    });
+  it('should choose the first candidate target that matches the cond (C)', async () => {
+    const nextState = await updateMachine.transition(
+      'G',
+      'UPDATE_BUTTON_CLICKED',
+      {
+        data: true,
+        status: 'X'
+      }
+    );
     assert.equal(nextState.value, 'C');
   });
 
-  it('should choose the final candidate without a cond if none others match', () => {
-    const nextState = updateMachine.transition('G', 'UPDATE_BUTTON_CLICKED', {
-      data: true,
-      status: 'other'
-    });
+  it('should choose the final candidate without a cond if none others match', async () => {
+    const nextState = await updateMachine.transition(
+      'G',
+      'UPDATE_BUTTON_CLICKED',
+      {
+        data: true,
+        status: 'other'
+      }
+    );
     assert.equal(nextState.value, 'F');
   });
 
-  it('should carry actions from previous transitions within same step', () => {
+  it('should carry actions from previous transitions within same step', async () => {
     const machine = Machine({
       initial: 'A',
       states: {
@@ -106,7 +122,7 @@ describe('transient states (eventless transitions)', () => {
       }
     });
 
-    const state = machine.transition('A', 'TIMER');
+    const state = await machine.transition('A', 'TIMER');
 
     assert.deepEqual(state.actions.map(a => a.type), [
       'exit_A',
@@ -115,7 +131,7 @@ describe('transient states (eventless transitions)', () => {
     ]);
   });
 
-  it('should execute all internal events one after the other', () => {
+  it('should execute all internal events one after the other', async () => {
     const machine = Machine({
       type: 'parallel',
       states: {
@@ -178,12 +194,12 @@ describe('transient states (eventless transitions)', () => {
       }
     });
 
-    const state = machine.transition(machine.initialState, 'E');
+    const state = await machine.transition(await machine.initialState, 'E');
 
     assert.deepEqual(state.value, { A: 'A2', B: 'B2', C: 'C4' });
   });
 
-  it('should execute all eventless transitions in the same microstep', () => {
+  it('should execute all eventless transitions in the same microstep', async () => {
     const machine = Machine({
       type: 'parallel',
       states: {
@@ -242,12 +258,12 @@ describe('transient states (eventless transitions)', () => {
       }
     });
 
-    const state = machine.transition(machine.initialState, 'E');
+    const state = await machine.transition(await machine.initialState, 'E');
 
     assert.deepEqual(state.value, { A: 'A4', B: 'B4' });
   });
 
-  it('should check for automatic transitions even after microsteps are done', () => {
+  it('should check for automatic transitions even after microsteps are done', async () => {
     const machine = Machine({
       type: 'parallel',
       states: {
@@ -293,23 +309,24 @@ describe('transient states (eventless transitions)', () => {
       }
     });
 
-    let state = machine.initialState; // A1, B1, C1
-    state = machine.transition(state, 'A'); // A2, B2, C2
+    let state = await machine.initialState; // A1, B1, C1
+    state = await machine.transition(state, 'A'); // A2, B2, C2
     assert.deepEqual(state.value, { A: 'A2', B: 'B2', C: 'C2' });
   });
 
-  it('should determine the resolved initial state from the transient state', () => {
-    assert.deepEqual(greetingMachine.initialState.value, 'morning');
+  it('should determine the resolved initial state from the transient state', async () => {
+    const state = await greetingMachine.initialState;
+    assert.deepEqual(state.value, 'morning');
   });
 
-  it('should determine the resolved state from a root transient state', () => {
-    const morningState = greetingMachine.initialState;
-    const stillMorningState = greetingMachine.transition(
+  it('should determine the resolved state from a root transient state', async () => {
+    const morningState = await greetingMachine.initialState;
+    const stillMorningState = await greetingMachine.transition(
       morningState,
       'CHANGE'
     );
     assert.deepEqual(stillMorningState.value, 'morning');
-    const eveningState = greetingMachine.transition(
+    const eveningState = await greetingMachine.transition(
       stillMorningState,
       'RECHECK'
     );

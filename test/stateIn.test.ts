@@ -92,35 +92,33 @@ const lightMachine = Machine({
 });
 
 describe('transition "in" check', () => {
-  it('should transition if string state path matches current state value', () => {
-    assert.deepEqual(
-      machine.transition(
-        {
-          a: 'a1',
-          b: {
-            b2: {
-              foo: 'foo2',
-              bar: 'bar1'
-            }
-          }
-        },
-        'EVENT1'
-      ).value,
+  it('should transition if string state path matches current state value', async () => {
+    const state = await machine.transition(
       {
-        a: 'a2',
+        a: 'a1',
         b: {
           b2: {
             foo: 'foo2',
             bar: 'bar1'
           }
         }
-      }
+      },
+      'EVENT1'
     );
+    assert.deepEqual(state.value, {
+      a: 'a2',
+      b: {
+        b2: {
+          foo: 'foo2',
+          bar: 'bar1'
+        }
+      }
+    });
   });
 
-  it('should transition if state node ID matches current state value', () => {
+  it('should transition if state node ID matches current state value', async () => {
     assert.deepEqual(
-      machine.transition(
+      (await machine.transition(
         {
           a: 'a1',
           b: {
@@ -131,7 +129,7 @@ describe('transition "in" check', () => {
           }
         },
         'EVENT3'
-      ).value,
+      )).value,
       {
         a: 'a2',
         b: {
@@ -144,16 +142,19 @@ describe('transition "in" check', () => {
     );
   });
 
-  it('should not transition if string state path does not match current state value', () => {
-    assert.deepEqual(machine.transition({ a: 'a1', b: 'b1' }, 'EVENT1').value, {
-      a: 'a1',
-      b: 'b1'
-    });
+  it('should not transition if string state path does not match current state value', async () => {
+    assert.deepEqual(
+      (await machine.transition({ a: 'a1', b: 'b1' }, 'EVENT1')).value,
+      {
+        a: 'a1',
+        b: 'b1'
+      }
+    );
   });
 
-  it('should not transition if state value matches current state value', () => {
+  it('should not transition if state value matches current state value', async () => {
     assert.deepEqual(
-      machine.transition(
+      (await machine.transition(
         {
           a: 'a1',
           b: {
@@ -164,7 +165,7 @@ describe('transition "in" check', () => {
           }
         },
         'EVENT2'
-      ).value,
+      )).value,
       {
         a: 'a2',
         b: {
@@ -177,12 +178,12 @@ describe('transition "in" check', () => {
     );
   });
 
-  it('matching should be relative to grandparent (match)', () => {
+  it('matching should be relative to grandparent (match)', async () => {
     assert.deepEqual(
-      machine.transition(
+      (await machine.transition(
         { a: 'a1', b: { b2: { foo: 'foo1', bar: 'bar1' } } },
         'EVENT_DEEP'
-      ).value,
+      )).value,
       {
         a: 'a1',
         b: {
@@ -195,12 +196,12 @@ describe('transition "in" check', () => {
     );
   });
 
-  it('matching should be relative to grandparent (no match)', () => {
+  it('matching should be relative to grandparent (no match)', async () => {
     assert.deepEqual(
-      machine.transition(
+      (await machine.transition(
         { a: 'a1', b: { b2: { foo: 'foo1', bar: 'bar2' } } },
         'EVENT_DEEP'
-      ).value,
+      )).value,
       {
         a: 'a1',
         b: {
@@ -213,16 +214,16 @@ describe('transition "in" check', () => {
     );
   });
 
-  it('should work to forbid events', () => {
-    const walkState = lightMachine.transition('red.walk', 'TIMER');
+  it('should work to forbid events', async () => {
+    const walkState = await lightMachine.transition('red.walk', 'TIMER');
 
     assert.deepEqual(walkState.value, { red: 'walk' });
 
-    const waitState = lightMachine.transition('red.wait', 'TIMER');
+    const waitState = await lightMachine.transition('red.wait', 'TIMER');
 
     assert.deepEqual(waitState.value, { red: 'wait' });
 
-    const stopState = lightMachine.transition('red.stop', 'TIMER');
+    const stopState = await lightMachine.transition('red.stop', 'TIMER');
 
     assert.deepEqual(
       stopState.value,

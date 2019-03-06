@@ -82,50 +82,68 @@ const machine = Machine({
 
 describe('State', () => {
   describe('.changed', () => {
-    it('should indicate that it is not changed if initial state', () => {
-      assert.isUndefined(machine.initialState.changed);
+    it('should indicate that it is not changed if initial state', async () => {
+      assert.isUndefined((await machine.initialState).changed);
     });
 
-    it('states from external transitions with onEntry actions should be changed', () => {
-      const changedState = machine.transition(machine.initialState, 'EXTERNAL');
+    it('states from external transitions with onEntry actions should be changed', async () => {
+      const changedState = await machine.transition(
+        await machine.initialState,
+        'EXTERNAL'
+      );
       assert.isTrue(changedState.changed, 'changed due to onEntry action');
     });
 
-    it('states from internal transitions with no actions should be unchanged', () => {
-      const changedState = machine.transition(machine.initialState, 'EXTERNAL');
-      const unchangedState = machine.transition(changedState, 'INERT');
+    it('states from internal transitions with no actions should be unchanged', async () => {
+      const changedState = await machine.transition(
+        await machine.initialState,
+        'EXTERNAL'
+      );
+      const unchangedState = await machine.transition(changedState, 'INERT');
       assert.isFalse(
         unchangedState.changed,
         'unchanged - same state, no actions'
       );
     });
 
-    it('states from internal transitions with actions should be changed', () => {
-      const changedState = machine.transition(machine.initialState, 'INTERNAL');
+    it('states from internal transitions with actions should be changed', async () => {
+      const changedState = await machine.transition(
+        await machine.initialState,
+        'INTERNAL'
+      );
       assert.isTrue(changedState.changed, 'changed - transition actions');
     });
 
-    it('normal state transitions should be changed (initial state)', () => {
-      const changedState = machine.transition(machine.initialState, 'TO_TWO');
+    it('normal state transitions should be changed (initial state)', async () => {
+      const changedState = await machine.transition(
+        await machine.initialState,
+        'TO_TWO'
+      );
       assert.isTrue(
         changedState.changed,
         'changed - different state (from initial)'
       );
     });
 
-    it('normal state transitions should be changed', () => {
-      const twoState = machine.transition(machine.initialState, 'TO_TWO');
-      const changedState = machine.transition(twoState, 'FOO_EVENT');
+    it('normal state transitions should be changed', async () => {
+      const twoState = await machine.transition(
+        await machine.initialState,
+        'TO_TWO'
+      );
+      const changedState = await machine.transition(twoState, 'FOO_EVENT');
       assert.isTrue(changedState.changed, 'changed - different state');
     });
 
-    it('normal state transitions with unknown event should be unchanged', () => {
-      const twoState = machine.transition(machine.initialState, 'TO_TWO');
-      const changedState = machine.transition(twoState, 'UNKNOWN_EVENT');
+    it('normal state transitions with unknown event should be unchanged', async () => {
+      const twoState = await machine.transition(
+        await machine.initialState,
+        'TO_TWO'
+      );
+      const changedState = await machine.transition(twoState, 'UNKNOWN_EVENT');
       assert.isFalse(changedState.changed, 'not changed - unknown event');
     });
 
-    it('should report entering a final state as changed', () => {
+    it('should report entering a final state as changed', async () => {
       const finalMachine = Machine({
         id: 'final',
         initial: 'one',
@@ -142,15 +160,15 @@ describe('State', () => {
         }
       });
 
-      const twoState = finalMachine.transition('one', 'DONE');
+      const twoState = await finalMachine.transition('one', 'DONE');
 
       assert.isTrue(twoState.changed);
     });
   });
 
   describe('.nextEvents', () => {
-    it('returns the next possible events for the current state', () => {
-      assert.deepEqual(machine.initialState.nextEvents, [
+    it('returns the next possible events for the current state', async () => {
+      assert.deepEqual((await machine.initialState).nextEvents, [
         'EXTERNAL',
         'INERT',
         'INTERNAL',
@@ -160,19 +178,22 @@ describe('State', () => {
       ]);
 
       assert.deepEqual(
-        machine.transition(machine.initialState, 'TO_TWO').nextEvents,
+        (await machine.transition(await machine.initialState, 'TO_TWO'))
+          .nextEvents,
         ['FOO_EVENT', 'DEEP_EVENT', 'MACHINE_EVENT']
       );
 
       assert.deepEqual(
-        machine.transition(machine.initialState, 'TO_THREE').nextEvents,
+        (await machine.transition(await machine.initialState, 'TO_THREE'))
+          .nextEvents,
         ['P31', 'P32', 'THREE_EVENT', 'MACHINE_EVENT']
       );
     });
 
-    xit('returns events when transitioned from StateValue', () => {
-      const A = machine.transition(machine.initialState, 'TO_THREE');
-      const B = machine.transition(A.value, 'TO_THREE');
+    xit('returns events when transitioned from StateValue', async () => {
+      const initialState = await machine.initialState;
+      const A = await machine.transition(initialState, 'TO_THREE');
+      const B = await machine.transition(A.value, 'TO_THREE');
 
       assert.deepEqual(B.nextEvents, [
         'P31',
@@ -184,27 +205,30 @@ describe('State', () => {
   });
 
   describe('State.create()', () => {
-    it('should be able to create a state from a JSON config', () => {
-      const { initialState } = machine;
+    it('should be able to create a state from a JSON config', async () => {
+      const initialState = await machine.initialState;
       const jsonInitialState = JSON.parse(JSON.stringify(initialState));
 
       const stateFromConfig = State.create(jsonInitialState);
 
-      assert.deepEqual(machine.transition(stateFromConfig, 'TO_TWO').value, {
-        two: { deep: 'foo' }
-      });
+      assert.deepEqual(
+        (await machine.transition(stateFromConfig, 'TO_TWO')).value,
+        {
+          two: { deep: 'foo' }
+        }
+      );
     });
   });
 
   describe('State.inert()', () => {
-    it('should create an inert instance of the given State', () => {
-      const { initialState } = machine;
+    it('should create an inert instance of the given State', async () => {
+      const initialState = await machine.initialState;
 
       assert.isEmpty(State.inert(initialState, undefined).actions);
     });
 
-    it('should create an inert instance of the given stateValue and context', () => {
-      const { initialState } = machine;
+    it('should create an inert instance of the given stateValue and context', async () => {
+      const initialState = await machine.initialState;
       const inertState = State.inert(initialState.value, { foo: 'bar' });
 
       assert.isEmpty(inertState.actions);
@@ -213,26 +237,26 @@ describe('State', () => {
   });
 
   describe('.inert', () => {
-    it('should create an inert instance of the current State', () => {
-      const { initialState } = machine;
+    it('should create an inert instance of the current State', async () => {
+      const initialState = await machine.initialState;
 
       assert.isEmpty(initialState.inert.actions);
     });
   });
 
   describe('.event', () => {
-    it('the .event prop should be the event (string) that caused the transition', () => {
-      const { initialState } = machine;
+    it('the .event prop should be the event (string) that caused the transition', async () => {
+      const initialState = await machine.initialState;
 
-      const nextState = machine.transition(initialState, 'TO_TWO');
+      const nextState = await machine.transition(initialState, 'TO_TWO');
 
       assert.deepEqual(nextState.event, { type: 'TO_TWO' });
     });
 
-    it('the .event prop should be the event (object) that caused the transition', () => {
-      const { initialState } = machine;
+    it('the .event prop should be the event (object) that caused the transition', async () => {
+      const initialState = await machine.initialState;
 
-      const nextState = machine.transition(initialState, {
+      const nextState = await machine.transition(initialState, {
         type: 'TO_TWO',
         foo: 'bar'
       });
@@ -240,8 +264,8 @@ describe('State', () => {
       assert.deepEqual(nextState.event, { type: 'TO_TWO', foo: 'bar' });
     });
 
-    it('the .event prop should be the initial event for the initial state', () => {
-      const { initialState } = machine;
+    it('the .event prop should be the initial event for the initial state', async () => {
+      const initialState = await machine.initialState;
 
       assert.deepEqual(initialState.event, initEvent);
     });
