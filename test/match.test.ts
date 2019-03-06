@@ -265,7 +265,7 @@ describe('matchesState()', () => {
 });
 
 describe('matches() method', () => {
-  it('should execute matchesState on a State given the parent state value', () => {
+  it('should execute matchesState on a State given the parent state value', async () => {
     const machine = Machine({
       initial: 'foo',
       states: {
@@ -283,8 +283,8 @@ describe('matches() method', () => {
       }
     });
 
-    assert.ok(machine.initialState.matches('foo'));
-    assert.ok(machine.initialState.matches({ foo: 'bar' }));
-    assert.notOk(machine.initialState.matches('fake'));
+    assert.ok((await machine.initialState).matches('foo'));
+    assert.ok((await machine.initialState).matches({ foo: 'bar' }));
+    assert.notOk((await machine.initialState).matches('fake'));
   });
 });

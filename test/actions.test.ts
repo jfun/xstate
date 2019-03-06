@@ -190,83 +190,96 @@ describe('onEntry/onExit actions', () => {
   });
 
   describe('State.actions', () => {
-    it('should return the entry actions of an initial state', () => {
-      assert.sameMembers(lightMachine.initialState.actions.map(a => a.type), [
-        'enter_green'
-      ]);
-    });
-
-    it('should return the entry actions of an initial state (deep)', () => {
-      assert.sameMembers(deepMachine.initialState.actions.map(a => a.type), [
-        'enter_a',
-        'enter_a1'
-      ]);
-    });
-
-    it('should return the entry actions of an initial state (parallel)', () => {
+    it('should return the entry actions of an initial state', async () => {
       assert.sameMembers(
-        parallelMachine.initialState.actions.map(a => a.type),
+        (await lightMachine.initialState).actions.map(a => a.type),
+        ['enter_green']
+      );
+    });
+
+    it('should return the entry actions of an initial state (deep)', async () => {
+      assert.sameMembers(
+        (await deepMachine.initialState).actions.map(a => a.type),
+        ['enter_a', 'enter_a1']
+      );
+    });
+
+    it('should return the entry actions of an initial state (parallel)', async () => {
+      assert.sameMembers(
+        (await parallelMachine.initialState).actions.map(a => a.type),
         ['enter_a', 'enter_b', 'enter_a1', 'enter_b1']
       );
     });
 
-    it('should return the entry and exit actions of a transition', () => {
+    it('should return the entry and exit actions of a transition', async () => {
       assert.deepEqual(
-        lightMachine.transition('green', 'TIMER').actions.map(a => a.type),
+        (await lightMachine.transition('green', 'TIMER')).actions.map(
+          a => a.type
+        ),
         ['exit_green', 'enter_yellow']
       );
     });
 
-    it('should return the entry and exit actions of a deep transition', () => {
+    it('should return the entry and exit actions of a deep transition', async () => {
       assert.deepEqual(
-        lightMachine.transition('yellow', 'TIMER').actions.map(a => a.type),
+        (await lightMachine.transition('yellow', 'TIMER')).actions.map(
+          a => a.type
+        ),
         ['exit_yellow', 'enter_red', 'enter_walk']
       );
     });
 
-    it('should return the entry and exit actions of a nested transition', () => {
+    it('should return the entry and exit actions of a nested transition', async () => {
       assert.deepEqual(
-        lightMachine
-          .transition('red.walk', 'PED_COUNTDOWN')
-          .actions.map(a => a.type),
+        (await lightMachine.transition(
+          'red.walk',
+          'PED_COUNTDOWN'
+        )).actions.map(a => a.type),
         ['exit_walk', 'enter_wait']
       );
     });
 
-    it('should not have actions for unhandled events (shallow)', () => {
+    it('should not have actions for unhandled events (shallow)', async () => {
       assert.deepEqual(
-        lightMachine.transition('green', 'FAKE').actions.map(a => a.type),
+        (await lightMachine.transition('green', 'FAKE')).actions.map(
+          a => a.type
+        ),
         []
       );
     });
 
-    it('should not have actions for unhandled events (deep)', () => {
+    it('should not have actions for unhandled events (deep)', async () => {
       assert.deepEqual(
-        lightMachine.transition('red', 'FAKE').actions.map(a => a.type),
+        (await lightMachine.transition('red', 'FAKE')).actions.map(a => a.type),
         []
       );
     });
 
-    it('should exit and enter the state for self-transitions (shallow)', () => {
+    it('should exit and enter the state for self-transitions (shallow)', async () => {
       assert.deepEqual(
-        lightMachine.transition('green', 'NOTHING').actions.map(a => a.type),
+        (await lightMachine.transition('green', 'NOTHING')).actions.map(
+          a => a.type
+        ),
         ['exit_green', 'enter_green']
       );
     });
 
-    it('should exit and enter the state for self-transitions (deep)', () => {
+    it('should exit and enter the state for self-transitions (deep)', async () => {
       // 'red' state resolves to 'red.walk'
       assert.deepEqual(
-        lightMachine.transition('red', 'NOTHING').actions.map(a => a.type),
+        (await lightMachine.transition('red', 'NOTHING')).actions.map(
+          a => a.type
+        ),
         ['exit_walk', 'exit_red', 'enter_red', 'enter_walk']
       );
     });
 
-    it('should return actions for parallel machines', () => {
+    it('should return actions for parallel machines', async () => {
       assert.deepEqual(
-        parallelMachine
-          .transition(parallelMachine.initialState, 'CHANGE')
-          .actions.map(a => a.type),
+        (await parallelMachine.transition(
+          await parallelMachine.initialState,
+          'CHANGE'
+        )).actions.map(a => a.type),
         [
           'exit_a1',
           'exit_b1',
@@ -279,9 +292,11 @@ describe('onEntry/onExit actions', () => {
       );
     });
 
-    it('should return nested actions in the correct (child to parent) order', () => {
+    it('should return nested actions in the correct (child to parent) order', async () => {
       assert.deepEqual(
-        deepMachine.transition('a.a1', 'CHANGE').actions.map(a => a.type),
+        (await deepMachine.transition('a.a1', 'CHANGE')).actions.map(
+          a => a.type
+        ),
         [
           'exit_a1',
           'exit_a',
@@ -293,36 +308,37 @@ describe('onEntry/onExit actions', () => {
       );
     });
 
-    it('should ignore parent state actions for same-parent substates', () => {
+    it('should ignore parent state actions for same-parent substates', async () => {
       assert.deepEqual(
-        deepMachine.transition('a.a1', 'NEXT').actions.map(a => a.type),
+        (await deepMachine.transition('a.a1', 'NEXT')).actions.map(a => a.type),
         ['exit_a1', 'enter_a2']
       );
     });
 
-    it('should work with function actions', () => {
+    it('should work with function actions', async () => {
       assert.deepEqual(
-        deepMachine
-          .transition(deepMachine.initialState, 'NEXT_FN')
-          .actions.map(action => action.type),
+        (await deepMachine.transition(
+          await deepMachine.initialState,
+          'NEXT_FN'
+        )).actions.map(action => action.type),
         ['exit_a1', 'enter_a3_fn']
       );
 
       assert.deepEqual(
-        deepMachine
-          .transition('a.a3', 'NEXT')
-          .actions.map(action => action.type),
+        (await deepMachine.transition('a.a3', 'NEXT')).actions.map(
+          action => action.type
+        ),
         ['exit_a3_fn', 'do_a3_to_a2', 'enter_a2']
       );
     });
 
-    it('should exit children of parallel state nodes', () => {
-      const stateB = parallelMachine2.transition(
-        parallelMachine2.initialState,
+    it('should exit children of parallel state nodes', async () => {
+      const stateB = await parallelMachine2.transition(
+        await parallelMachine2.initialState,
         'to-B'
       );
-      const stateD2 = parallelMachine2.transition(stateB, 'to-D2');
-      const stateA = parallelMachine2.transition(stateD2, 'to-A');
+      const stateD2 = await parallelMachine2.transition(stateB, 'to-D2');
+      const stateA = await parallelMachine2.transition(stateD2, 'to-A');
 
       assert.deepEqual(stateA.actions.map(action => action.type), ['D2 Exit']);
     });
@@ -364,13 +380,13 @@ describe('onEntry/onExit actions', () => {
         }
       });
 
-      it('with a relative transition', () => {
-        assert.isEmpty(pingPong.transition('ping.foo', 'TACK').actions);
+      it('with a relative transition', async () => {
+        assert.isEmpty((await pingPong.transition('ping.foo', 'TACK')).actions);
       });
 
-      it('with an absolute transition', () => {
+      it('with an absolute transition', async () => {
         assert.isEmpty(
-          pingPong.transition('ping.foo', 'ABSOLUTE_TACK').actions
+          (await pingPong.transition('ping.foo', 'ABSOLUTE_TACK')).actions
         );
       });
     });
@@ -393,9 +409,11 @@ describe('actions on invalid transition', () => {
     }
   });
 
-  it('should not recall previous actions', () => {
-    const nextState = stopMachine.transition('idle', 'STOP');
-    assert.isEmpty(stopMachine.transition(nextState, 'INVALID').actions);
+  it('should not recall previous actions', async () => {
+    const nextState = await stopMachine.transition('idle', 'STOP');
+    assert.isEmpty(
+      (await stopMachine.transition(nextState, 'INVALID')).actions
+    );
   });
 });
 
@@ -450,9 +468,9 @@ describe('actions option', () => {
       }
     }
   );
-  it('should reference actions defined in actions parameter of machine options', () => {
-    const { initialState } = simpleMachine;
-    const nextState = simpleMachine.transition(initialState, 'E');
+  it('should reference actions defined in actions parameter of machine options', async () => {
+    const initialState = await simpleMachine.initialState;
+    const nextState = await simpleMachine.transition(initialState, 'E');
 
     assert.includeMembers(nextState.actions.map(a => a.type), [
       'definedAction',
@@ -466,8 +484,8 @@ describe('actions option', () => {
     ]);
   });
 
-  it('should reference actions defined in actions parameter of machine options (initial state)', () => {
-    const { initialState } = simpleMachine;
+  it('should reference actions defined in actions parameter of machine options (initial state)', async () => {
+    const initialState = await simpleMachine.initialState;
 
     assert.includeMembers(initialState.actions.map(a => a.type), [
       'definedAction',
@@ -475,8 +493,8 @@ describe('actions option', () => {
     ]);
   });
 
-  it('should be able to reference action implementations from action objects', () => {
-    const state = simpleMachine.transition('a', 'EVENT');
+  it('should be able to reference action implementations from action objects', async () => {
+    const state = await simpleMachine.transition('a', 'EVENT');
 
     assert.deepEqual(state.actions, [
       { type: 'definedAction', exec: definedAction }
@@ -485,7 +503,7 @@ describe('actions option', () => {
     assert.deepEqual(state.context, { count: 10 });
   });
 
-  it('should work with anonymous functions (with warning)', () => {
+  it('should work with anonymous functions (with warning)', async () => {
     let onEntryCalled = false;
     let actionCalled = false;
     let onExitCalled = false;
@@ -508,7 +526,7 @@ describe('actions option', () => {
       }
     });
 
-    const { initialState } = anonMachine;
+    const initialState = await anonMachine.initialState;
 
     initialState.actions.forEach(action => {
       if (action.exec) {
@@ -524,7 +542,7 @@ describe('actions option', () => {
 
     assert.isTrue(onEntryCalled);
 
-    const inactiveState = anonMachine.transition(initialState, 'EVENT');
+    const inactiveState = await anonMachine.transition(initialState, 'EVENT');
 
     assert.lengthOf(inactiveState.actions, 2);
 

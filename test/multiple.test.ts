@@ -138,9 +138,15 @@ describe('multiple', () => {
   });
 
   describe('transitions to parallel states', () => {
-    const stateSimple = machine.initialState;
-    const stateInitial = machine.transition(stateSimple, 'INITIAL');
-    const stateM = machine.transition(stateSimple, 'DEEP_M');
+    let stateSimple;
+    let stateInitial;
+    let stateM;
+
+    before(async () => {
+      stateSimple = await machine.initialState;
+      stateInitial = await machine.transition(stateSimple, 'INITIAL');
+      stateM = await machine.transition(stateSimple, 'DEEP_M');
+    });
 
     it('should enter initial states of parallel states', () => {
       assert.deepEqual(stateInitial.value, {
@@ -152,50 +158,74 @@ describe('multiple', () => {
       assert.deepEqual(stateM.value, { para: { A: 'B', K: 'M', P: 'Q' } });
     });
 
-    it('should enter specific states in all regions', () => {
-      const stateCMR = machine.transition(stateSimple, 'DEEP_CMR');
+    it('should enter specific states in all regions', async () => {
+      const stateCMR = await machine.transition(stateSimple, 'DEEP_CMR');
       assert.deepEqual(stateCMR.value, { para: { A: 'C', K: 'M', P: 'R' } });
     });
 
-    it('should enter specific states in some regions', () => {
-      const stateMR = machine.transition(stateSimple, 'DEEP_MR');
+    it('should enter specific states in some regions', async () => {
+      const stateMR = await machine.transition(stateSimple, 'DEEP_MR');
       assert.deepEqual(stateMR.value, { para: { A: 'B', K: 'M', P: 'R' } });
     });
 
-    it('should reject two targets in the same region', () => {
-      assert.throws(() =>
-        machine.transition(stateSimple, 'BROKEN_SAME_REGION')
-      );
+    it('should reject two targets in the same region', async () => {
+      let error;
+      try {
+        await machine.transition(stateSimple, 'BROKEN_SAME_REGION');
+      } catch (err) {
+        error = err;
+      }
+      assert.isDefined(error);
     });
 
-    it('should reject targets inside and outside a region', () => {
-      assert.throws(() =>
-        machine.transition(stateSimple, 'BROKEN_DIFFERENT_REGIONS')
-      );
+    it('should reject targets inside and outside a region', async () => {
+      let error;
+      try {
+        await machine.transition(stateSimple, 'BROKEN_DIFFERENT_REGIONS');
+      } catch (err) {
+        error = err;
+      }
+      assert.isDefined(error);
     });
 
-    it('should reject two targets in different regions', () => {
-      assert.throws(() =>
-        machine.transition(stateSimple, 'BROKEN_DIFFERENT_REGIONS_2')
-      );
+    it('should reject two targets in different regions', async () => {
+      let error;
+      try {
+        await machine.transition(stateSimple, 'BROKEN_DIFFERENT_REGIONS_2');
+      } catch (err) {
+        error = err;
+      }
+      assert.isDefined(error);
     });
 
-    it('should reject two targets in different regions at different levels', () => {
-      assert.throws(() =>
-        machine.transition(stateSimple, 'BROKEN_DIFFERENT_REGIONS_3')
-      );
+    it('should reject two targets in different regions at different levels', async () => {
+      let error;
+      try {
+        await machine.transition(stateSimple, 'BROKEN_DIFFERENT_REGIONS_3');
+      } catch (err) {
+        error = err;
+      }
+      assert.isDefined(error);
     });
 
-    it('should reject two deep targets in different regions at top level', () => {
-      assert.throws(() =>
-        machine.transition(stateSimple, 'BROKEN_DIFFERENT_REGIONS_3')
-      );
+    it('should reject two deep targets in different regions at top level', async () => {
+      let error;
+      try {
+        await machine.transition(stateSimple, 'BROKEN_DIFFERENT_REGIONS_3');
+      } catch (err) {
+        error = err;
+      }
+      assert.isDefined(error);
     });
 
-    it('should reject two deep targets in different regions at different levels', () => {
-      assert.throws(() =>
-        machine.transition(stateSimple, 'BROKEN_DIFFERENT_REGIONS_4')
-      );
+    it('should reject two deep targets in different regions at different levels', async () => {
+      let error;
+      try {
+        await machine.transition(stateSimple, 'BROKEN_DIFFERENT_REGIONS_4');
+      } catch (err) {
+        error = err;
+      }
+      assert.isDefined(error);
     });
   });
 });

@@ -99,15 +99,25 @@ describe('strict mode', () => {
     strict: true
   });
 
-  it('should throw for unacceptable events', () => {
-    assert.throws(() => {
-      lightMachine.transition('green', 'FOO');
-    });
+  it('should throw for unacceptable events', async () => {
+    let error;
+    try {
+      await lightMachine.transition('green', 'FOO');
+    } catch (err) {
+      error = err;
+    }
+
+    assert.isDefined(error);
   });
 
-  it('should not throw for built-in events', () => {
-    assert.doesNotThrow(() => {
-      lightMachine.transition('red.wait', 'PED_COUNTDOWN');
-    });
+  it('should not throw for built-in events', async () => {
+    let error;
+    try {
+      await lightMachine.transition('red.wait', 'PED_COUNTDOWN');
+    } catch (err) {
+      error = err;
+    }
+
+    assert.isUndefined(error);
   });
 });

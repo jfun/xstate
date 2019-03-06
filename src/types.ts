@@ -91,7 +91,7 @@ export type ConditionPredicate<TContext, TEvent extends EventObject> = (
   context: TContext,
   event: TEvent,
   microstepState: StateValue
-) => boolean;
+) => boolean | Promise<boolean>;
 
 export type Condition<TContext, TEvent extends EventObject> =
   | string

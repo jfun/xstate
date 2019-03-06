@@ -90,106 +90,157 @@ describe('deterministic machine', () => {
   });
 
   describe('machine.initialState', () => {
-    it('should return the initial state value', () => {
-      assert.deepEqual(lightMachine.initialState.value, 'green');
+    it('should return the initial state value', async () => {
+      assert.deepEqual((await lightMachine.initialState).value, 'green');
     });
 
-    it('should not have any history', () => {
-      assert.isUndefined(lightMachine.initialState.history);
+    it('should not have any history', async () => {
+      assert.isUndefined((await lightMachine.initialState).history);
     });
   });
 
   describe('machine.transition()', () => {
-    it('should properly transition states based on string event', () => {
+    it('should properly transition states based on string event', async () => {
       assert.deepEqual(
-        lightMachine.transition('green', 'TIMER').value,
+        (await lightMachine.transition('green', 'TIMER')).value,
         'yellow'
       );
     });
 
-    it('should properly transition states based on event-like object', () => {
+    it('should properly transition states based on event-like object', async () => {
       const event = {
         type: 'TIMER'
       };
 
-      assert.deepEqual(lightMachine.transition('green', event).value, 'yellow');
+      assert.deepEqual(
+        (await lightMachine.transition('green', event)).value,
+        'yellow'
+      );
     });
 
-    it('should not transition states for illegal transitions', () => {
-      assert.equal(lightMachine.transition('green', 'FAKE').value, 'green');
-      assert.isEmpty(lightMachine.transition('green', 'FAKE').actions);
+    it('should not transition states for illegal transitions', async () => {
+      assert.equal(
+        (await lightMachine.transition('green', 'FAKE')).value,
+        'green'
+      );
+      assert.isEmpty((await lightMachine.transition('green', 'FAKE')).actions);
     });
 
-    it('should throw an error if not given an event', () => {
+    it('should throw an error if not given an event', async () => {
       // @ts-ignore
-      assert.throws(() => (lightMachine.transition as any)('red', undefined));
+      let error;
+      try {
+        await (lightMachine.transition as any)('red', undefined);
+      } catch (err) {
+        error = err;
+      }
+
+      assert.isDefined(error);
     });
 
-    it('should transition to nested states as target', () => {
-      assert.deepEqual(testMachine.transition('a', 'T').value, { b: 'b1' });
+    it('should transition to nested states as target', async () => {
+      assert.deepEqual((await testMachine.transition('a', 'T')).value, {
+        b: 'b1'
+      });
     });
 
-    it('should throw an error for transitions from invalid states', () => {
-      assert.throws(() => testMachine.transition('fake', 'T'));
+    it('should throw an error for transitions from invalid states', async () => {
+      let error;
+      try {
+        await testMachine.transition('fake', 'T');
+      } catch (err) {
+        error = err;
+      }
+
+      assert.isDefined(error);
     });
 
-    it('should throw an error for transitions to invalid states', () => {
-      assert.throws(() => testMachine.transition('a', 'F'));
+    it('should throw an error for transitions to invalid states', async () => {
+      let error;
+      try {
+        await testMachine.transition('a', 'F');
+      } catch (err) {
+        error = err;
+      }
+      assert.isDefined(error);
     });
 
-    it('should throw an error for transitions from invalid substates', () => {
-      assert.throws(() => testMachine.transition('a.fake', 'T'));
+    it('should throw an error for transitions from invalid substates', async () => {
+      let error;
+      try {
+        await testMachine.transition('a.fake', 'T');
+      } catch (err) {
+        error = err;
+      }
+      assert.isDefined(error);
     });
   });
 
   describe('machine.transition() with nested states', () => {
-    it('should properly transition a nested state', () => {
+    it('should properly transition a nested state', async () => {
       assert.deepEqual(
-        lightMachine.transition('red.walk', 'PED_COUNTDOWN').value,
+        (await lightMachine.transition('red.walk', 'PED_COUNTDOWN')).value,
         { red: 'wait' }
       );
     });
 
-    it('should transition from initial nested states', () => {
-      assert.deepEqual(lightMachine.transition('red', 'PED_COUNTDOWN').value, {
-        red: 'wait'
-      });
+    it('should transition from initial nested states', async () => {
+      assert.deepEqual(
+        (await lightMachine.transition('red', 'PED_COUNTDOWN')).value,
+        {
+          red: 'wait'
+        }
+      );
     });
 
-    it('should transition from deep initial nested states', () => {
-      assert.deepEqual(lightMachine.transition('red', 'PED_COUNTDOWN').value, {
-        red: 'wait'
-      });
+    it('should transition from deep initial nested states', async () => {
+      assert.deepEqual(
+        (await lightMachine.transition('red', 'PED_COUNTDOWN')).value,
+        {
+          red: 'wait'
+        }
+      );
     });
 
-    it('should bubble up events that nested states cannot handle', () => {
-      assert.equal(lightMachine.transition('red.stop', 'TIMER').value, 'green');
+    it('should bubble up events that nested states cannot handle', async () => {
+      assert.equal(
+        (await lightMachine.transition('red.stop', 'TIMER')).value,
+        'green'
+      );
     });
 
-    it('should not transition from illegal events', () => {
-      assert.deepEqual(lightMachine.transition('red.walk', 'FAKE').value, {
-        red: 'walk'
-      });
-      assert.isEmpty(lightMachine.transition('red.walk', 'FAKE').actions);
+    it('should not transition from illegal events', async () => {
+      assert.deepEqual(
+        (await lightMachine.transition('red.walk', 'FAKE')).value,
+        {
+          red: 'walk'
+        }
+      );
+      assert.isEmpty(
+        (await lightMachine.transition('red.walk', 'FAKE')).actions
+      );
 
-      assert.deepEqual(deepMachine.transition('a1', 'FAKE').value, {
+      assert.deepEqual((await deepMachine.transition('a1', 'FAKE')).value, {
         a1: { a2: { a3: 'a4' } }
       });
-      assert.isEmpty(deepMachine.transition('a1', 'FAKE').actions);
+      assert.isEmpty((await deepMachine.transition('a1', 'FAKE')).actions);
     });
 
-    it('should transition to the deepest initial state', () => {
-      assert.deepEqual(lightMachine.transition('yellow', 'TIMER').value, {
-        red: 'walk'
-      });
+    it('should transition to the deepest initial state', async () => {
+      assert.deepEqual(
+        (await lightMachine.transition('yellow', 'TIMER')).value,
+        {
+          red: 'walk'
+        }
+      );
     });
 
-    it('should return the equivalent state if no transition occurs', () => {
-      const initialState = lightMachine.transition(
-        lightMachine.initialState,
+    it('should return the equivalent state if no transition occurs', async () => {
+      const initialState = await lightMachine.transition(
+        await lightMachine.initialState,
         'NOTHING'
       );
-      const nextState = lightMachine.transition(initialState, 'NOTHING');
+      const nextState = await lightMachine.transition(initialState, 'NOTHING');
 
       assert.equal(initialState.value, nextState.value);
       assert.isFalse(nextState.changed);
@@ -212,17 +263,17 @@ describe('deterministic machine', () => {
       }
     });
 
-    it('should work with substate nodes that have the same key', () => {
+    it('should work with substate nodes that have the same key', async () => {
       assert.deepEqual(
-        machine.transition(machine.initialState, 'NEXT').value,
+        (await machine.transition(await machine.initialState, 'NEXT')).value,
         'test'
       );
     });
   });
 
   describe('forbidden events', () => {
-    it('undefined transitions should forbid events', () => {
-      const walkState = lightMachine.transition('red.walk', 'TIMER');
+    it('undefined transitions should forbid events', async () => {
+      const walkState = await lightMachine.transition('red.walk', 'TIMER');
 
       assert.deepEqual(
         walkState.value,

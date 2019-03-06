@@ -709,22 +709,17 @@ class StateNode<
     state: State<TContext, TEvent>,
     event: OmniEventObject<TEvent>
   ): Promise<StateTransition<TContext, TEvent>> {
-    console.log('stateValue', stateValue);
-    console.log('event', event);
     // leaf node
     if (typeof stateValue === 'string') {
-      console.log('>>: leaf node');
       return this.transitionLeafNode(stateValue, state, event);
     }
 
     // hierarchical node
     if (keys(stateValue).length === 1) {
-      console.log('>>: compound node');
       return this.transitionCompoundNode(stateValue, state, event);
     }
 
     // orthogonal node
-    console.log('>>: orthogonal node');
     return this.transitionParallelNode(stateValue, state, event);
   }
   private async next(
@@ -909,7 +904,7 @@ class StateNode<
       condFn = condition;
     }
 
-    return await condFn(context, eventObject, interimState);
+    return condFn(context, eventObject, interimState);
   }
 
   /**
@@ -1051,8 +1046,6 @@ class StateNode<
       resolvedStateValue,
       resolvedContext
     );
-
-    console.log('currentState', currentState.value);
 
     const stateTransition = await this._transition(
       currentState.value,

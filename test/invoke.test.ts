@@ -167,20 +167,20 @@ describe('invoke', () => {
     );
 
     const service = interpret(someParentMachine)
-      .onDone(() => {
+      .onDone(async () => {
         // 1. The 'parent' machine will enter 'start' state
         // 2. The 'child' service will be run with ID 'someService'
         // 3. The 'child' machine will enter 'init' state
         // 4. The 'onEntry' action will be executed, which sends 'INC' to 'parent' machine twice
         // 5. The context will be updated to increment count to 2
 
-        assert.deepEqual(service.state.context, { count: 2 });
+        assert.deepEqual((await service).state.context, { count: 2 });
         done();
       })
       .start();
   });
 
-  it('should forward events to services if forward: true', () => {
+  it('should forward events to services if forward: true', async () => {
     const childMachine = Machine({
       id: 'child',
       initial: 'init',
@@ -228,8 +228,8 @@ describe('invoke', () => {
       }
     );
 
-    const service = interpret(someParentMachine)
-      .onDone(() => {
+    const service = await interpret(someParentMachine)
+      .onDone(async () => {
         // 1. The 'parent' machine will not do anything (inert transition)
         // 2. The 'FORWARD_DEC' event will be forwarded to the 'child' machine (forward: true)
         // 3. On the 'child' machine, the 'FORWARD_DEC' event sends the 'DEC' action to the 'parent' thrice
@@ -242,22 +242,20 @@ describe('invoke', () => {
     service.send('FORWARD_DEC');
   });
 
-  it('should start services (explicit machine, invoke = config)', done => {
-    interpret(fetcherMachine)
+  it('should start services (explicit machine, invoke = config)', async done => {
+    (await interpret(fetcherMachine)
       .onDone(() => {
         done();
       })
-      .start()
-      .send('GO_TO_WAITING');
+      .start()).send('GO_TO_WAITING');
   });
 
-  it('should start services (explicit machine, invoke = machine)', done => {
-    interpret(fetcherMachine)
+  it('should start services (explicit machine, invoke = machine)', async done => {
+    (await interpret(fetcherMachine)
       .onDone(_ => {
         done();
       })
-      .start()
-      .send('GO_TO_WAITING_MACHINE');
+      .start()).send('GO_TO_WAITING_MACHINE');
   });
 
   it('should use the service overwritten by withConfig', done => {
@@ -538,7 +536,7 @@ describe('invoke', () => {
         .start();
     });
 
-    it('should assign the resolved data when invoked with a promise factory', done => {
+    it('should assign the resolved data when invoked with a promise factory', async done => {
       const promiseMachine = Machine({
         id: 'promise',
         context: { count: 0 },
@@ -559,7 +557,7 @@ describe('invoke', () => {
         }
       });
 
-      const service = interpret(promiseMachine)
+      const service = await interpret(promiseMachine)
         .onDone(() => {
           assert.equal(service.state.context.count, 1);
           done();
@@ -567,7 +565,7 @@ describe('invoke', () => {
         .start();
     });
 
-    it('should assign the resolved data when invoked with a promise service', done => {
+    it('should assign the resolved data when invoked with a promise service', async done => {
       const promiseMachine = Machine(
         {
           id: 'promise',
@@ -595,7 +593,7 @@ describe('invoke', () => {
         }
       );
 
-      const service = interpret(promiseMachine)
+      const service = await interpret(promiseMachine)
         .onDone(() => {
           assert.equal(service.state.context.count, 1);
           done();
@@ -719,7 +717,7 @@ describe('invoke', () => {
         .start();
     });
 
-    it('should be able to specify a Promise as a service', done => {
+    it('should be able to specify a Promise as a service', async done => {
       const promiseMachine = Machine(
         {
           id: 'promise',
@@ -751,13 +749,12 @@ describe('invoke', () => {
         }
       );
 
-      interpret(promiseMachine)
+      (await interpret(promiseMachine)
         .onDone(() => done())
-        .start()
-        .send({ type: 'BEGIN', payload: true });
+        .start()).send({ type: 'BEGIN', payload: true });
     });
 
-    it('should be able to specify a callback as a service', done => {
+    it('should be able to specify a callback as a service', async done => {
       const callbackMachine = Machine(
         {
           id: 'callback',
@@ -796,22 +793,21 @@ describe('invoke', () => {
         }
       );
 
-      interpret(callbackMachine)
+      (await interpret(callbackMachine)
         .onDone(() => done())
-        .start()
-        .send({ type: 'BEGIN', payload: true });
+        .start()).send({ type: 'BEGIN', payload: true });
     });
   });
 
   describe('with callbacks', () => {
-    it('should treat a callback source as an event stream', done => {
-      interpret(intervalMachine)
+    it('should treat a callback source as an event stream', async done => {
+      await interpret(intervalMachine)
         .onDone(() => done())
         .start();
     });
 
-    it('should dispose of the callback (if disposal function provided)', done => {
-      const service = interpret(intervalMachine)
+    it('should dispose of the callback (if disposal function provided)', async done => {
+      const service = await interpret(intervalMachine)
         .onDone(() => {
           // if intervalService isn't disposed after skipping, 'INC' event will
           // keep being sent
@@ -919,9 +915,9 @@ describe('invoke', () => {
         .start();
     });
 
-    it('should be able to be stringified', () => {
-      const waitingState = fetcherMachine.transition(
-        fetcherMachine.initialState,
+    it('should be able to be stringified', async () => {
+      const waitingState = await fetcherMachine.transition(
+        await fetcherMachine.initialState,
         'GO_TO_WAITING'
       );
 
@@ -1015,9 +1011,9 @@ describe('invoke', () => {
         }
       });
 
-      it('ends on the completed state', done => {
+      it('ends on the completed state', async done => {
         const events: EventObject[] = [];
-        const service = interpret(anotherParentMachine)
+        const service = await interpret(anotherParentMachine)
           .onEvent(e => {
             events.push(e);
           })

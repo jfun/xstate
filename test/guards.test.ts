@@ -51,61 +51,69 @@ describe('guard conditions', () => {
     }
   );
 
-  it('should transition only if condition is met', () => {
+  it('should transition only if condition is met', async () => {
     assert.equal(
-      lightMachine.transition('green', 'TIMER', {
+      (await lightMachine.transition('green', 'TIMER', {
         elapsed: 50
-      }).value,
+      })).value,
       'green'
     );
 
     assert.deepEqual(
-      lightMachine.transition('green', 'TIMER', {
+      (await lightMachine.transition('green', 'TIMER', {
         elapsed: 120
-      }).value,
+      })).value,
       'yellow'
     );
   });
 
-  it('should transition if condition based on event is met', () => {
+  it('should transition if condition based on event is met', async () => {
     assert.deepEqual(
-      lightMachine.transition('green', { type: 'EMERGENCY', isEmergency: true })
-        .value,
+      (await lightMachine.transition('green', {
+        type: 'EMERGENCY',
+        isEmergency: true
+      })).value,
       'red'
     );
   });
 
-  it('should not transition if condition based on event is not met', () => {
+  it('should not transition if condition based on event is not met', async () => {
     assert.deepEqual(
-      lightMachine.transition('green', { type: 'EMERGENCY' }).value,
+      (await lightMachine.transition('green', { type: 'EMERGENCY' })).value,
       'green'
     );
   });
 
-  it('should not transition if no condition is met', () => {
-    const nextState = lightMachine.transition('green', 'TIMER', {
+  it('should not transition if no condition is met', async () => {
+    const nextState = await lightMachine.transition('green', 'TIMER', {
       elapsed: 9000
     });
     assert.deepEqual(nextState.value, 'green');
     assert.isEmpty(nextState.actions);
   });
 
-  it('should work with defined string transitions', () => {
-    const nextState = lightMachine.transition('yellow', 'TIMER', {
+  it('should work with defined string transitions', async () => {
+    const nextState = await lightMachine.transition('yellow', 'TIMER', {
       elapsed: 150
     });
     assert.equal(nextState.value, 'red');
   });
 
-  it('should work with defined string transitions (condition not met)', () => {
-    const nextState = lightMachine.transition('yellow', 'TIMER', {
+  it('should work with defined string transitions (condition not met)', async () => {
+    const nextState = await lightMachine.transition('yellow', 'TIMER', {
       elapsed: 10
     });
     assert.equal(nextState.value, 'yellow');
   });
 
-  it('should throw if string transition is not defined', () => {
-    assert.throws(() => lightMachine.transition('red', 'BAD_COND'));
+  it('should throw if string transition is not defined', async () => {
+    let error;
+    try {
+      await lightMachine.transition('red', 'BAD_COND');
+    } catch (err) {
+      error = err;
+    }
+    assert.isDefined(error);
   });
 });
 
@@ -153,28 +161,28 @@ describe('guard conditions', () => {
               T1: [
                 {
                   target: 'B1',
-                  cond: (_state, _event, interim) =>
+                  cond: async (_state, _event, interim) =>
                     matchesState('A.A1', interim)
                 }
               ],
               T2: [
                 {
                   target: 'B2',
-                  cond: (_state, _event, interim) =>
+                  cond: async (_state, _event, interim) =>
                     matchesState('A.A2', interim)
                 }
               ],
               T3: [
                 {
                   target: 'B3',
-                  cond: (_state, _event, interim) =>
+                  cond: async (_state, _event, interim) =>
                     matchesState('A.A3', interim)
                 }
               ],
               '': [
                 {
                   target: 'B4',
-                  cond: (_state, _event, interim) =>
+                  cond: async (_state, _event, interim) =>
                     matchesState('A.A4', interim)
                 }
               ]
@@ -189,24 +197,33 @@ describe('guard conditions', () => {
     }
   });
 
-  it('should guard against transition', () => {
-    assert.deepEqual(machine.transition({ A: 'A2', B: 'B0' }, 'T1').value, {
-      A: 'A2',
-      B: 'B0'
-    });
+  it('should guard against transition', async () => {
+    assert.deepEqual(
+      (await machine.transition({ A: 'A2', B: 'B0' }, 'T1')).value,
+      {
+        A: 'A2',
+        B: 'B0'
+      }
+    );
   });
 
-  it('should allow a matching transition', () => {
-    assert.deepEqual(machine.transition({ A: 'A2', B: 'B0' }, 'T2').value, {
-      A: 'A2',
-      B: 'B2'
-    });
+  it('should allow a matching transition', async () => {
+    assert.deepEqual(
+      (await machine.transition({ A: 'A2', B: 'B0' }, 'T2')).value,
+      {
+        A: 'A2',
+        B: 'B2'
+      }
+    );
   });
 
-  it('should check guards with interim states', () => {
-    assert.deepEqual(machine.transition({ A: 'A2', B: 'B0' }, 'A').value, {
-      A: 'A5',
-      B: 'B4'
-    });
+  it('should check guards with interim states', async () => {
+    assert.deepEqual(
+      (await machine.transition({ A: 'A2', B: 'B0' }, 'A')).value,
+      {
+        A: 'A5',
+        B: 'B4'
+      }
+    );
   });
 });

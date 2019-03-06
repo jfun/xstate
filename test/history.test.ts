@@ -35,41 +35,50 @@ describe('history states', () => {
     }
   });
 
-  it('should go to the most recently visited state', () => {
-    const onSecondState = historyMachine.transition('on', 'SWITCH');
-    const offState = historyMachine.transition(onSecondState, 'POWER');
+  it('should go to the most recently visited state', async () => {
+    const onSecondState = await historyMachine.transition('on', 'SWITCH');
+    const offState = await historyMachine.transition(onSecondState, 'POWER');
 
-    assert.deepEqual(historyMachine.transition(offState, 'POWER').value, {
-      on: 'second'
-    });
+    assert.deepEqual(
+      (await historyMachine.transition(offState, 'POWER')).value,
+      {
+        on: 'second'
+      }
+    );
   });
 
-  it('should go to the most recently visited state (explicit)', () => {
-    const onSecondState = historyMachine.transition('on', 'SWITCH');
-    const offState = historyMachine.transition(onSecondState, 'H_POWER');
+  it('should go to the most recently visited state (explicit)', async () => {
+    const onSecondState = await historyMachine.transition('on', 'SWITCH');
+    const offState = await historyMachine.transition(onSecondState, 'H_POWER');
 
-    assert.deepEqual(historyMachine.transition(offState, 'H_POWER').value, {
-      on: 'second'
-    });
+    assert.deepEqual(
+      (await historyMachine.transition(offState, 'H_POWER')).value,
+      {
+        on: 'second'
+      }
+    );
   });
 
-  it('should go to the initial state when no history present', () => {
-    assert.deepEqual(historyMachine.transition('off', 'POWER').value, {
+  it('should go to the initial state when no history present', async () => {
+    assert.deepEqual((await historyMachine.transition('off', 'POWER')).value, {
       on: 'first'
     });
   });
 
-  it('should go to the initial state when no history present (explicit)', () => {
-    assert.deepEqual(historyMachine.transition('off', 'H_POWER').value, {
-      on: 'first'
-    });
+  it('should go to the initial state when no history present (explicit)', async () => {
+    assert.deepEqual(
+      (await historyMachine.transition('off', 'H_POWER')).value,
+      {
+        on: 'first'
+      }
+    );
   });
 
-  it('should dispose of previous histories', () => {
-    const onSecondState = historyMachine.transition('on', 'SWITCH');
-    const offState = historyMachine.transition(onSecondState, 'H_POWER');
-    const onState = historyMachine.transition(offState, 'H_POWER');
-    const nextState = historyMachine.transition(onState, 'H_POWER');
+  it('should dispose of previous histories', async () => {
+    const onSecondState = await historyMachine.transition('on', 'SWITCH');
+    const offState = await historyMachine.transition(onSecondState, 'H_POWER');
+    const onState = await historyMachine.transition(offState, 'H_POWER');
+    const nextState = await historyMachine.transition(onState, 'H_POWER');
     assert.isUndefined(nextState.history!.history);
   });
 });
@@ -120,36 +129,39 @@ describe('deep history states', () => {
     }
   });
 
-  describe('history', () => {
+  describe('history', async () => {
     // on.first -> on.second.A
-    const state2A = historyMachine.transition({ on: 'first' }, 'SWITCH');
+    const state2A = await historyMachine.transition({ on: 'first' }, 'SWITCH');
     // on.second.A -> on.second.B.P
-    const state2BP = historyMachine.transition(state2A, 'INNER');
+    const state2BP = await historyMachine.transition(state2A, 'INNER');
     // on.second.B.P -> on.second.B.Q
-    const state2BQ = historyMachine.transition(state2BP, 'INNER');
+    const state2BQ = await historyMachine.transition(state2BP, 'INNER');
 
-    it('should go to the shallow history', () => {
+    it('should go to the shallow history', async () => {
       // on.second.B.P -> off
-      const stateOff = historyMachine.transition(state2BP, 'POWER');
-      assert.deepEqual(historyMachine.transition(stateOff, 'POWER').value, {
-        on: { second: 'A' }
-      });
+      const stateOff = await historyMachine.transition(state2BP, 'POWER');
+      assert.deepEqual(
+        (await historyMachine.transition(stateOff, 'POWER')).value,
+        {
+          on: { second: 'A' }
+        }
+      );
     });
 
-    it('should go to the deep history (explicit)', () => {
+    it('should go to the deep history (explicit)', async () => {
       // on.second.B.P -> off
-      const stateOff = historyMachine.transition(state2BP, 'POWER');
+      const stateOff = await historyMachine.transition(state2BP, 'POWER');
       assert.deepEqual(
-        historyMachine.transition(stateOff, 'DEEP_POWER').value,
+        (await historyMachine.transition(stateOff, 'DEEP_POWER')).value,
         { on: { second: { B: 'P' } } }
       );
     });
 
-    it('should go to the deepest history', () => {
+    it('should go to the deepest history', async () => {
       // on.second.B.Q -> off
-      const stateOff = historyMachine.transition(state2BQ, 'POWER');
+      const stateOff = await historyMachine.transition(state2BQ, 'POWER');
       assert.deepEqual(
-        historyMachine.transition(stateOff, 'DEEP_POWER').value,
+        (await historyMachine.transition(stateOff, 'DEEP_POWER')).value,
         { on: { second: { B: 'Q' } } }
       );
     });
@@ -235,71 +247,76 @@ describe('parallel history states', () => {
     }
   });
 
-  describe('history', () => {
+  describe('history', async () => {
     // on.first -> on.second.A
-    const stateABKL = historyMachine.transition(
-      historyMachine.initialState,
+    const stateABKL = await historyMachine.transition(
+      await historyMachine.initialState,
       'SWITCH'
     );
     // INNER_A twice
-    const stateACDKL = historyMachine.transition(stateABKL, 'INNER_A');
-    const stateACEKL = historyMachine.transition(stateACDKL, 'INNER_A');
+    const stateACDKL = await historyMachine.transition(stateABKL, 'INNER_A');
+    const stateACEKL = await historyMachine.transition(stateACDKL, 'INNER_A');
 
     // INNER_K twice
-    const stateACEKMN = historyMachine.transition(stateACEKL, 'INNER_K');
-    const stateACEKMO = historyMachine.transition(stateACEKMN, 'INNER_K');
+    const stateACEKMN = await historyMachine.transition(stateACEKL, 'INNER_K');
+    const stateACEKMO = await historyMachine.transition(stateACEKMN, 'INNER_K');
 
-    it('should ignore parallel state history', () => {
-      const stateOff = historyMachine.transition(stateACDKL, 'POWER');
-      assert.deepEqual(historyMachine.transition(stateOff, 'POWER').value, {
-        on: { A: 'B', K: 'L' }
-      });
+    it('should ignore parallel state history', async () => {
+      const stateOff = await historyMachine.transition(stateACDKL, 'POWER');
+      assert.deepEqual(
+        (await historyMachine.transition(stateOff, 'POWER')).value,
+        {
+          on: { A: 'B', K: 'L' }
+        }
+      );
     });
 
-    it('should remember first level state history', () => {
-      const stateOff = historyMachine.transition(stateACDKL, 'POWER');
+    it('should remember first level state history', async () => {
+      const stateOff = await historyMachine.transition(stateACDKL, 'POWER');
       assert.deepEqual(
-        historyMachine.transition(stateOff, 'DEEP_POWER').value,
+        (await historyMachine.transition(stateOff, 'DEEP_POWER')).value,
         {
           on: { A: { C: 'D' }, K: 'L' }
         }
       );
     });
 
-    it('should re-enter each regions of parallel state correctly', () => {
-      const stateOff = historyMachine.transition(stateACEKMO, 'POWER');
+    it('should re-enter each regions of parallel state correctly', async () => {
+      const stateOff = await historyMachine.transition(stateACEKMO, 'POWER');
       assert.deepEqual(
-        historyMachine.transition(stateOff, 'DEEP_POWER').value,
+        (await historyMachine.transition(stateOff, 'DEEP_POWER')).value,
         {
           on: { A: { C: 'E' }, K: { M: 'O' } }
         }
       );
     });
 
-    it('should re-enter multiple history states', () => {
-      const stateOff = historyMachine.transition(stateACEKMO, 'POWER');
+    it('should re-enter multiple history states', async () => {
+      const stateOff = await historyMachine.transition(stateACEKMO, 'POWER');
       assert.deepEqual(
-        historyMachine.transition(stateOff, 'PARALLEL_HISTORY').value,
+        (await historyMachine.transition(stateOff, 'PARALLEL_HISTORY')).value,
         {
           on: { A: { C: 'D' }, K: { M: 'N' } }
         }
       );
     });
 
-    it('should re-enter a parallel with partial history', () => {
-      const stateOff = historyMachine.transition(stateACEKMO, 'POWER');
+    it('should re-enter a parallel with partial history', async () => {
+      const stateOff = await historyMachine.transition(stateACEKMO, 'POWER');
       assert.deepEqual(
-        historyMachine.transition(stateOff, 'PARALLEL_SOME_HISTORY').value,
+        (await historyMachine.transition(stateOff, 'PARALLEL_SOME_HISTORY'))
+          .value,
         {
           on: { A: { C: 'D' }, K: { M: 'N' } }
         }
       );
     });
 
-    it('should re-enter a parallel with full history', () => {
-      const stateOff = historyMachine.transition(stateACEKMO, 'POWER');
+    it('should re-enter a parallel with full history', async () => {
+      const stateOff = await historyMachine.transition(stateACEKMO, 'POWER');
       assert.deepEqual(
-        historyMachine.transition(stateOff, 'PARALLEL_DEEP_HISTORY').value,
+        (await historyMachine.transition(stateOff, 'PARALLEL_DEEP_HISTORY'))
+          .value,
         {
           on: { A: { C: 'E' }, K: { M: 'O' } }
         }
@@ -325,8 +342,8 @@ describe('transient history', () => {
     }
   });
 
-  it('should have history on transient transitions', () => {
-    const nextState = transientMachine.transition('A', 'EVENT');
+  it('should have history on transient transitions', async () => {
+    const nextState = await transientMachine.transition('A', 'EVENT');
     assert.equal(nextState.value, 'C');
     assert.isDefined(nextState.history);
   });
@@ -366,7 +383,7 @@ describe('internal transition with history', () => {
     }
   });
 
-  it('should transition internally to the most recently visited state', () => {
+  it('should transition internally to the most recently visited state', async () => {
     // {
     //   $current: 'first',
     //   first: undefined,
@@ -376,7 +393,7 @@ describe('internal transition with history', () => {
     //     other: undefined
     //   }
     // }
-    const state2 = machine.transition(machine.initialState, 'NEXT');
+    const state2 = await machine.transition(await machine.initialState, 'NEXT');
     // {
     //   $current: 'second',
     //   first: undefined,
@@ -386,7 +403,7 @@ describe('internal transition with history', () => {
     //     other: undefined
     //   }
     // }
-    const state3 = machine.transition(state2, 'NEXT');
+    const state3 = await machine.transition(state2, 'NEXT');
     // {
     //   $current: 'second',
     //   first: undefined,
@@ -432,16 +449,23 @@ describe('multistage history states', () => {
     }
   });
 
-  it('should go to the most recently visited state', () => {
-    const onTurboState = pcWithTurboButtonMachine.transition(
+  it('should go to the most recently visited state', async () => {
+    const onTurboState = await pcWithTurboButtonMachine.transition(
       'running',
       'SWITCH_TURBO'
     );
-    const offState = pcWithTurboButtonMachine.transition(onTurboState, 'POWER');
-    const loadingState = pcWithTurboButtonMachine.transition(offState, 'POWER');
+    const offState = await pcWithTurboButtonMachine.transition(
+      onTurboState,
+      'POWER'
+    );
+    const loadingState = await pcWithTurboButtonMachine.transition(
+      offState,
+      'POWER'
+    );
 
     assert.deepEqual(
-      pcWithTurboButtonMachine.transition(loadingState, 'STARTED').value,
+      (await pcWithTurboButtonMachine.transition(loadingState, 'STARTED'))
+        .value,
       { running: 'turbo' }
     );
   });

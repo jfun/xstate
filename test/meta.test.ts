@@ -73,8 +73,8 @@ describe('state meta data', () => {
     }
   });
 
-  it('states should aggregate meta data', () => {
-    const yellowState = lightMachine.transition('green', 'TIMER');
+  it('states should aggregate meta data', async () => {
+    const yellowState = await lightMachine.transition('green', 'TIMER');
     assert.deepEqual(yellowState.meta, {
       'light.yellow': {
         yellowData: 'yellow data'
@@ -84,8 +84,8 @@ describe('state meta data', () => {
     assert.notProperty(yellowState.meta, 'light');
   });
 
-  it('states should aggregate meta data (deep)', () => {
-    assert.deepEqual(lightMachine.transition('yellow', 'TIMER').meta, {
+  it('states should aggregate meta data (deep)', async () => {
+    assert.deepEqual((await lightMachine.transition('yellow', 'TIMER')).meta, {
       'light.red': {
         redData: {
           nested: {

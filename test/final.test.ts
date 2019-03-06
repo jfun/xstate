@@ -68,27 +68,27 @@ const finalMachine = Machine({
 });
 
 describe('final states', () => {
-  it('should emit the "done.state.final.red" event when all nested states are in their final states', () => {
-    const redState = finalMachine.transition('yellow', 'TIMER');
-    const waitState = finalMachine.transition(redState, 'PED_WAIT');
-    const stopState = finalMachine.transition(waitState, 'PED_STOP');
+  it('should emit the "done.state.final.red" event when all nested states are in their final states', async () => {
+    const redState = await finalMachine.transition('yellow', 'TIMER');
+    const waitState = await finalMachine.transition(redState, 'PED_WAIT');
+    const stopState = await finalMachine.transition(waitState, 'PED_STOP');
 
     assert.sameDeepMembers(stopState.actions, [
       { type: 'stopCrosswalk1', exec: undefined }
     ]);
 
-    const stopState2 = finalMachine.transition(stopState, 'PED_STOP');
+    const stopState2 = await finalMachine.transition(stopState, 'PED_STOP');
 
     assert.sameDeepMembers(stopState2.actions, [
       { type: 'stopCrosswalk2', exec: undefined },
       { type: 'prepareGreenLight', exec: undefined }
     ]);
 
-    const greenState = finalMachine.transition(stopState, 'TIMER');
+    const greenState = await finalMachine.transition(stopState, 'TIMER');
     assert.isEmpty(greenState.actions);
   });
 
-  it('should execute final child state actions first', () => {
+  it('should execute final child state actions first', async () => {
     const nestedFinalMachine = Machine({
       id: 'nestedFinal',
       initial: 'foo',
@@ -116,7 +116,7 @@ describe('final states', () => {
       }
     });
 
-    const { initialState } = nestedFinalMachine;
+    const initialState = await nestedFinalMachine.initialState;
 
     assert.deepEqual(initialState.actions.map(a => a.type), [
       'bazAction',

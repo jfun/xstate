@@ -137,7 +137,7 @@ describe('StateTree', () => {
     ]);
   });
 
-  it('only marks a tree as done when all parallel child nodes are in final states', () => {
+  it('only marks a tree as done when all parallel child nodes are in final states', async () => {
     const myMachine = Machine({
       id: 'myId',
       type: 'parallel',
@@ -159,14 +159,14 @@ describe('StateTree', () => {
       }
     });
 
-    const firstCompleteState = myMachine.transition(
-      myMachine.initialState,
+    const firstCompleteState = await myMachine.transition(
+      await myMachine.initialState,
       'FIRST_COMPLETE'
     );
 
     assert.isFalse(firstCompleteState.tree!.done);
 
-    const secondCompleteState = myMachine.transition(
+    const secondCompleteState = await myMachine.transition(
       firstCompleteState,
       'SECOND_COMPLETE'
     );

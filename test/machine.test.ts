@@ -108,25 +108,28 @@ describe('machine', () => {
   });
 
   describe('machine.initialState', () => {
-    it('should return a State instance', () => {
-      assert.instanceOf(lightMachine.initialState, State);
+    it('should return a State instance', async () => {
+      assert.instanceOf(await lightMachine.initialState, State);
     });
 
-    it('should return the initial state', () => {
-      assert.equal(lightMachine.initialState.value, 'green');
+    it('should return the initial state', async () => {
+      assert.equal((await lightMachine.initialState).value, 'green');
     });
   });
 
   describe('machine.history', () => {
-    it('should not retain previous history', () => {
-      const next = lightMachine.transition(lightMachine.initialState, 'TIMER');
-      const following = lightMachine.transition(next, 'TIMER');
+    it('should not retain previous history', async () => {
+      const next = await lightMachine.transition(
+        await lightMachine.initialState,
+        'TIMER'
+      );
+      const following = await lightMachine.transition(next, 'TIMER');
       assert.isUndefined(following!.history!.history);
     });
   });
 
   describe('machine.withConfig', () => {
-    it('should override guards and actions', () => {
+    it('should override guards and actions', async () => {
       const differentMachine = configMachine.withConfig({
         actions: {
           entryAction: () => {
@@ -144,34 +147,36 @@ describe('machine', () => {
 
       const service = interpret(differentMachine);
 
-      assert.throws(
-        () => service.start(),
-        /new entry/,
-        'different action should be used'
-      );
+      let error;
+      try {
+        await service.start();
+      } catch (err) {
+        error = err;
+      }
+      assert.isDefined(error);
 
       assert.deepEqual(
-        differentMachine.transition('foo', 'EVENT').value,
+        (await differentMachine.transition('foo', 'EVENT')).value,
         'bar'
       );
     });
 
-    it('should not override context if not defined', () => {
+    it('should not override context if not defined', async () => {
       const differentMachine = configMachine.withConfig({});
 
       assert.deepEqual(
-        differentMachine.initialState.context,
+        (await differentMachine.initialState).context,
         configMachine.context
       );
     });
 
-    it('should override context (second argument)', () => {
+    it('should override context (second argument)', async () => {
       const differentMachine = configMachine.withConfig(
         {},
         { foo: 'different' }
       );
 
-      assert.deepEqual(differentMachine.initialState.context, {
+      assert.deepEqual((await differentMachine.initialState).context, {
         foo: 'different'
       });
     });

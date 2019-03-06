@@ -49,9 +49,9 @@ const topLevelMachine = Machine({
 });
 
 describe('internal transitions', () => {
-  it('parent state should enter child state without re-entering self', () => {
-    const nextState = wordMachine.transition(
-      wordMachine.initialState,
+  it('parent state should enter child state without re-entering self', async () => {
+    const nextState = await wordMachine.transition(
+      await wordMachine.initialState,
       'RIGHT_CLICK'
     );
 
@@ -63,8 +63,11 @@ describe('internal transitions', () => {
     );
   });
 
-  it('parent state should only exit/reenter if there is an explicit self-transition', () => {
-    const resetState = wordMachine.transition('direction.center', 'RESET');
+  it('parent state should only exit/reenter if there is an explicit self-transition', async () => {
+    const resetState = await wordMachine.transition(
+      'direction.center',
+      'RESET'
+    );
 
     assert.deepEqual(resetState.value, { direction: 'left' });
     assert.deepEqual(resetState.actions.map(a => a.type), [
@@ -73,8 +76,8 @@ describe('internal transitions', () => {
     ]);
   });
 
-  it('parent state should only exit/reenter if there is an explicit self-transition (to child)', () => {
-    const resetState = wordMachine.transition(
+  it('parent state should only exit/reenter if there is an explicit self-transition (to child)', async () => {
+    const resetState = await wordMachine.transition(
       'direction.right',
       'RESET_TO_CENTER'
     );
@@ -86,32 +89,44 @@ describe('internal transitions', () => {
     ]);
   });
 
-  it('should listen to events declared at top state', () => {
-    const actualState = topLevelMachine.transition('Failure', 'CLICKED_CLOSE');
+  it('should listen to events declared at top state', async () => {
+    const actualState = await topLevelMachine.transition(
+      'Failure',
+      'CLICKED_CLOSE'
+    );
 
     assert.deepEqual(actualState.value, 'Hidden');
   });
 
-  it('should work with targetless transitions (in conditional array)', () => {
-    const sameState = topLevelMachine.transition('Hidden', 'TARGETLESS_ARRAY');
+  it('should work with targetless transitions (in conditional array)', async () => {
+    const sameState = await topLevelMachine.transition(
+      'Hidden',
+      'TARGETLESS_ARRAY'
+    );
 
     assert.deepEqual(sameState.actions.map(a => a.type), ['doSomething']);
   });
 
-  it('should work with targetless transitions (in object)', () => {
-    const sameState = topLevelMachine.transition('Hidden', 'TARGETLESS_OBJECT');
+  it('should work with targetless transitions (in object)', async () => {
+    const sameState = await topLevelMachine.transition(
+      'Hidden',
+      'TARGETLESS_OBJECT'
+    );
 
     assert.deepEqual(sameState.actions.map(a => a.type), ['doSomething']);
   });
 
-  it('should work on parent with targetless transitions (in conditional array)', () => {
-    const sameState = topLevelMachine.transition('Failure', 'TARGETLESS_ARRAY');
+  it('should work on parent with targetless transitions (in conditional array)', async () => {
+    const sameState = await topLevelMachine.transition(
+      'Failure',
+      'TARGETLESS_ARRAY'
+    );
 
     assert.deepEqual(sameState.actions.map(a => a.type), ['doSomethingParent']);
   });
 
-  it('should work with targetless transitions (in object)', () => {
-    const sameState = topLevelMachine.transition(
+  it('should work with targetless transitions (in object)', async () => {
+    const sameState = await topLevelMachine.transition(
       'Failure',
       'TARGETLESS_OBJECT'
     );
@@ -119,8 +134,11 @@ describe('internal transitions', () => {
     assert.deepEqual(sameState.actions.map(a => a.type), ['doSomethingParent']);
   });
 
-  it('should maintain the child state when targetless transition is handled by parent', () => {
-    const hiddenState = topLevelMachine.transition('Hidden', 'PARENT_EVENT');
+  it('should maintain the child state when targetless transition is handled by parent', async () => {
+    const hiddenState = await topLevelMachine.transition(
+      'Hidden',
+      'PARENT_EVENT'
+    );
 
     assert.deepEqual(hiddenState.value, 'Hidden');
   });

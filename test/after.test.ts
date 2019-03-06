@@ -53,9 +53,9 @@ describe('delayed transitions', () => {
     ]);
   });
 
-  it('should transition after delay', () => {
-    const nextState = lightMachine.transition(
-      lightMachine.initialState,
+  it('should transition after delay', async () => {
+    const nextState = await lightMachine.transition(
+      await lightMachine.initialState,
       after(1000, 'light.green')
     );
 

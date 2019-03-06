@@ -73,10 +73,12 @@ describe('interpreter', () => {
   });
 
   describe('.nextState() method', () => {
-    it('returns the next state for the given event without changing the interpreter state', () => {
-      const service = interpret(lightMachine, {clock: new SimulatedClock()}).start();
+    it('returns the next state for the given event without changing the interpreter state', async () => {
+      const service = await interpret(lightMachine, {
+        clock: new SimulatedClock()
+      }).start();
 
-      const nextState = service.nextState('TIMER');
+      const nextState = await service.nextState('TIMER');
       assert.equal(nextState.value, 'yellow');
       assert.equal(service.state.value, 'green');
     });
@@ -140,7 +142,7 @@ describe('interpreter', () => {
       ]);
     });
 
-    it('can send an event after a delay (expression)', () => {
+    it('can send an event after a delay (expression)', async () => {
       interface DelayExprMachineCtx {
         initialDelay: number;
       }
@@ -173,7 +175,7 @@ describe('interpreter', () => {
 
       const clock = new SimulatedClock();
 
-      const delayExprService = interpret(delayExprMachine, {
+      const delayExprService = await interpret(delayExprMachine, {
         clock
       })
         .onDone(() => {
@@ -243,7 +245,7 @@ describe('interpreter', () => {
       assert.equal(activityState, 'off');
     });
 
-    it('should stop activities upon stopping the service', () => {
+    it('should stop activities upon stopping the service', async () => {
       let stopActivityState: string;
 
       const stopActivityMachine = Machine(
@@ -270,7 +272,7 @@ describe('interpreter', () => {
         }
       );
 
-      const stopActivityService = interpret(stopActivityMachine).start();
+      const stopActivityService = await interpret(stopActivityMachine).start();
 
       assert.equal(stopActivityState!, 'on');
 
@@ -303,7 +305,7 @@ describe('interpreter', () => {
   });
 
   it('should throw an error if an event is sent to an uninitialized interpreter', () => {
-    const service = interpret(lightMachine, {clock: new SimulatedClock()});
+    const service = interpret(lightMachine, { clock: new SimulatedClock() });
 
     assert.throws(() => service.send('SOME_EVENT'));
 
@@ -337,11 +339,13 @@ describe('interpreter', () => {
     );
   });
 
-  it('should not update when stopped', () => {
-    let state = lightMachine.initialState;
-    const service = interpret(lightMachine, {clock: new SimulatedClock()}).onTransition(s => (state = s));
+  it('should not update when stopped', async () => {
+    let state = await lightMachine.initialState;
+    const service = interpret(lightMachine, {
+      clock: new SimulatedClock()
+    }).onTransition(s => (state = s));
 
-    service.start();
+    await service.start();
     service.send('TIMER'); // yellow
     assert.deepEqual(state.value, 'yellow');
 
@@ -353,7 +357,7 @@ describe('interpreter', () => {
     }
   });
 
-  it('should be able to log (log action)', () => {
+  it('should be able to log (log action)', async () => {
     const logs: any[] = [];
 
     const logMachine = Machine({
@@ -374,7 +378,7 @@ describe('interpreter', () => {
       }
     });
 
-    const service = interpret(logMachine, {
+    const service = await interpret(logMachine, {
       logger: msg => logs.push(msg)
     }).start();
 
@@ -515,7 +519,7 @@ describe('interpreter', () => {
         .start();
     });
 
-    it('actions should be able to be executed manually with execute()', done => {
+    it('actions should be able to be executed manually with execute()', async done => {
       let effect = false;
 
       const machine = Machine({
@@ -534,7 +538,7 @@ describe('interpreter', () => {
         }
       });
 
-      const service = interpret(machine, { execute: false })
+      const service = await interpret(machine, { execute: false })
         .onTransition(state => {
           setTimeout(() => {
             service.execute(state);
