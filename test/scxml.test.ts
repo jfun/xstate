@@ -84,8 +84,8 @@ interface SCIONTest {
 }
 
 async function runW3TestToCompletion(machine: StateNode): Promise<void> {
-  await new Promise(res => {
-    interpret(machine)
+  await new Promise(async res => {
+    await interpret(machine)
       .onDone(res)
       .start();
   });
@@ -115,18 +115,21 @@ async function runTestToCompletion(
     })
     .start(nextState);
 
-  test.events.forEach(async ({ event, nextConfiguration, after }, i) => {
+  for (const [
+    i,
+    { event, nextConfiguration, after }
+  ] of test.events.entries()) {
     if (after) {
-      ((await service).clock as SimulatedClock).increment(after);
+      (service.clock as SimulatedClock).increment(after);
     }
-    service.send(event.name);
+    await service.send(event.name);
 
     const stateIds = machine
       .getStateNodes(nextState)
       .map(stateNode => stateNode.id);
 
     assert.include(stateIds, nextConfiguration[0], `run ${i}`);
-  });
+  }
 }
 
 function evalCond(expr: string, context: object | undefined) {
@@ -147,8 +150,10 @@ describe('scxml', () => {
   const testGroupKeys = Object.keys(testGroups);
   // const testGroupKeys = ['w3c-ecma'];
 
-  testGroupKeys.forEach(testGroupName => {
-    testGroups[testGroupName].forEach(testName => {
+  // testGroupKeys.forEach(testGroupName => {
+  for (const testGroupName of testGroupKeys) {
+    // testGroups[testGroupName].forEach(testName => {
+    for (const testName of testGroups[testGroupName]) {
       const scxmlSource =
         overrides[testGroupName] &&
         overrides[testGroupName].indexOf(testName) !== -1
@@ -177,6 +182,6 @@ describe('scxml', () => {
         // console.dir(machine.config, { depth: null });
         await runTestToCompletion(machine, scxmlTest);
       });
-    });
-  });
+    }
+  }
 });

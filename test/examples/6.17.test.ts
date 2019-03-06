@@ -51,8 +51,8 @@ describe('Example 6.17', () => {
     }
   };
 
-  Object.keys(expected).forEach(fromState => {
-    Object.keys(expected[fromState]).forEach(eventTypes => {
+  for (const fromState of Object.keys(expected)) {
+    for (const eventTypes of Object.keys(expected[fromState])) {
       const toState = expected[fromState][eventTypes];
 
       it(`should go from ${fromState} to ${JSON.stringify(
@@ -66,8 +66,8 @@ describe('Example 6.17', () => {
 
         assert.deepEqual(resultState.value, toState);
       });
-    });
-  });
+    }
+  }
 });
 
 describe('Jump to ID', () => {
@@ -120,8 +120,8 @@ describe('Jump to ID', () => {
     }
   };
 
-  Object.keys(expected).forEach(fromState => {
-    Object.keys(expected[fromState]).forEach(eventTypes => {
+  for (const fromState of Object.keys(expected)) {
+    for (const eventTypes of Object.keys(expected[fromState])) {
       const toState = expected[fromState][eventTypes];
 
       it(`should go from ${fromState} to ${JSON.stringify(
@@ -135,6 +135,6 @@ describe('Jump to ID', () => {
 
         assert.deepEqual(resultState.value, toState);
       });
-    });
-  });
+    }
+  }
 });

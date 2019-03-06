@@ -593,7 +593,6 @@ class StateNode<
     const noTransitionKeys: string[] = [];
     const transitionMap: Record<string, StateTransition<TContext, TEvent>> = {};
 
-    // keys(stateValue).forEach(async subStateKey => {
     for (const subStateKey of keys(stateValue)) {
       const subStateValue = stateValue[subStateKey];
 

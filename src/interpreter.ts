@@ -28,16 +28,16 @@ import { mapContext } from './utils';
 export type StateListener<TContext, TEvent extends EventObject> = (
   state: State<TContext, TEvent>,
   event: OmniEventObject<TEvent>
-) => void;
+) => void | Promise<void>;
 
 export type ContextListener<TContext = DefaultContext> = (
   context: TContext,
   prevContext: TContext | undefined
-) => void;
+) => void | Promise<void>;
 
-export type EventListener = (event: EventObject) => void;
+export type EventListener = (event: EventObject) => void | Promise<void>;
 
-export type Listener = () => void;
+export type Listener = () => void | Promise<void>;
 
 export interface Clock {
   setTimeout(fn: (...args: any[]) => void, timeout: number): any;
@@ -218,21 +218,21 @@ export class Interpreter<
    *
    * @param state The state whose actions will be executed
    */
-  public execute(state: State<TContext, TEvent>): void {
-    state.actions.forEach(action => {
-      this.exec(action, state.context, state.event);
-    });
+  public async execute(state: State<TContext, TEvent>): Promise<void> {
+    for (const action of state.actions) {
+      await this.exec(action, state.context, state.event);
+    }
   }
-  private update(
+  private async update(
     state: State<TContext, TEvent>,
     event: Event<TEvent> | OmniEventObject<TEvent>
-  ): void {
+  ): Promise<void> {
     // Update state
     this.state = state;
 
     // Execute actions
     if (this.options.execute) {
-      this.execute(this.state);
+      await this.execute(this.state);
     }
 
     // Dev tools
@@ -242,14 +242,20 @@ export class Interpreter<
 
     // Execute listeners
     if (state.event) {
-      this.eventListeners.forEach(listener => listener(state.event));
+      await Promise.all(
+        [...this.eventListeners].map(listener => listener(state.event))
+      );
     }
 
-    this.listeners.forEach(listener => listener(state, state.event));
-    this.contextListeners.forEach(ctxListener =>
-      ctxListener(
-        this.state.context,
-        this.state.history ? this.state.history.context : undefined
+    await Promise.all(
+      [...this.listeners].map(listener => listener(state, state.event))
+    );
+    await Promise.all(
+      [...this.contextListeners].map(ctxListener =>
+        ctxListener(
+          this.state.context,
+          this.state.history ? this.state.history.context : undefined
+        )
       )
     );
 
@@ -259,13 +265,15 @@ export class Interpreter<
         this.state.context,
         toEventObject<OmniEventObject<TEvent>>(event)
       );
-      this.doneListeners.forEach(listener =>
-        listener(doneInvoke(this.id, doneData))
+      await Promise.all(
+        [...this.doneListeners].map(listener =>
+          listener(doneInvoke(this.id, doneData))
+        )
       );
       this.stop();
     }
 
-    this.flushEventQueue();
+    await this.flushEventQueue();
   }
   /*
    * Adds a listener that is notified whenever a state transition happens. The listener is called with
@@ -365,7 +373,7 @@ export class Interpreter<
     if (this.options.devTools) {
       this.attachDev();
     }
-    this.update(initialState, { type: actionTypes.init });
+    await this.update(initialState, { type: actionTypes.init });
     return this;
   }
   /**
@@ -410,7 +418,7 @@ export class Interpreter<
     const eventObject = toEventObject<OmniEventObject<TEvent>>(event);
     const nextState = await this.nextState(eventObject);
 
-    this.update(nextState, event);
+    await this.update(nextState, event);
 
     // Forward copy of event to child interpreters
     this.forward(eventObject);
@@ -510,11 +518,11 @@ export class Interpreter<
     });
   }
   private defer(sendAction: SendActionObject<TContext, TEvent>): number {
-    return this.clock.setTimeout(() => {
+    return this.clock.setTimeout(async () => {
       if (sendAction.to) {
         this.sendTo(sendAction.event, sendAction.to);
       } else {
-        this.send(sendAction.event);
+        await this.send(sendAction.event);
       }
     }, sendAction.delay || 0);
   }
@@ -522,11 +530,11 @@ export class Interpreter<
     this.clock.clearTimeout(this.delayedEventsMap[sendId]);
     delete this.delayedEventsMap[sendId];
   }
-  private exec(
+  private async exec(
     action: ActionObject<TContext, OmniEventObject<TEvent>>,
     context: TContext,
     event: OmniEventObject<TEvent>
-  ): void {
+  ): Promise<void> {
     if (action.exec) {
       return action.exec(context, event, { action });
     }
@@ -584,10 +592,10 @@ export class Interpreter<
           if (source instanceof Promise) {
             this.spawnPromise(id, source);
           } else if (typeof source === 'function') {
-            this.spawnCallback(id, source);
+            await this.spawnCallback(id, source);
           } else if (typeof source !== 'string') {
             // TODO: try/catch here
-            this.spawn(
+            await this.spawn(
               data
                 ? source.withContext(mapContext(data, context, event as TEvent))
                 : source,
@@ -653,22 +661,22 @@ export class Interpreter<
       this.forwardTo.delete(childId);
     }
   }
-  private spawn<
+  private async spawn<
     TChildContext,
     TChildStateSchema,
     TChildEvents extends EventObject
   >(
     machine: StateMachine<TChildContext, TChildStateSchema, TChildEvents>,
     options: { id?: string; autoForward?: boolean } = {}
-  ): Interpreter<TChildContext, TChildStateSchema, TChildEvents> {
+  ): Promise<Interpreter<TChildContext, TChildStateSchema, TChildEvents>> {
     const childService = new Interpreter(machine, {
       parent: this,
       id: options.id || machine.id
     });
 
-    childService
-      .onDone(doneEvent => {
-        this.send(doneEvent as OmniEvent<TEvent>); // todo: fix
+    await childService
+      .onDone(async doneEvent => {
+        await this.send(doneEvent as OmniEvent<TEvent>); // todo: fix
       })
       .start();
 
@@ -684,14 +692,14 @@ export class Interpreter<
     let canceled = false;
 
     promise
-      .then(response => {
+      .then(async response => {
         if (!canceled) {
-          this.send(doneInvoke(id, response));
+          await this.send(doneInvoke(id, response));
         }
       })
-      .catch(errorData => {
+      .catch(async errorData => {
         // Send "error.execution" to this (parent).
-        this.send(error(errorData, id));
+        await this.send(error(errorData, id));
       });
 
     this.children.set(id, {
@@ -701,7 +709,10 @@ export class Interpreter<
       }
     });
   }
-  private spawnCallback(id: string, callback: InvokeCallback): void {
+  private async spawnCallback(
+    id: string,
+    callback: InvokeCallback
+  ): Promise<void> {
     const receive = (e: TEvent) => this.send(e);
     let listener = (e: EventObject) => {
       if (!IS_PRODUCTION) {
@@ -722,10 +733,10 @@ export class Interpreter<
       });
 
       if (stop instanceof Promise) {
-        stop.catch(e => this.send(error(e, id)));
+        stop.catch(async e => await this.send(error(e, id)));
       }
     } catch (e) {
-      this.send(error(e, id));
+      await this.send(error(e, id));
     }
 
     this.children.set(id, {
@@ -742,10 +753,10 @@ export class Interpreter<
       stop: dispose
     });
   }
-  private flushEventQueue() {
+  private async flushEventQueue() {
     const flushedEvent = this.eventQueue.shift();
     if (flushedEvent) {
-      this.send(flushedEvent);
+      await this.send(flushedEvent);
     }
   }
   private attachDev() {

@@ -42,20 +42,25 @@ describe('interpreter', () => {
   });
 
   it('immediately notifies the listener with the initial state and event', done => {
-    const service = interpret(idMachine).onTransition((initialState, event) => {
-      assert.instanceOf(initialState, State);
-      assert.deepEqual(initialState.value, idMachine.initialState.value);
-      assert.deepEqual(event.type, actionTypes.init);
-      done();
-    });
+    const service = interpret(idMachine).onTransition(
+      async (initialState, event) => {
+        assert.instanceOf(initialState, State);
+        assert.deepEqual(
+          initialState.value,
+          (await idMachine.initialState).value
+        );
+        assert.deepEqual(event.type, actionTypes.init);
+        done();
+      }
+    );
 
     service.start();
   });
 
-  it('.initialState returns the initial state', () => {
+  it('.initialState returns the initial state', async () => {
     const service = interpret(idMachine);
 
-    assert.deepEqual(service.initialState, idMachine.initialState);
+    assert.deepEqual(await service.initialState, await idMachine.initialState);
   });
 
   describe('id', () => {
@@ -85,7 +90,7 @@ describe('interpreter', () => {
   });
 
   describe('send with delay', () => {
-    it('can send an event after a delay', () => {
+    it('can send an event after a delay', async () => {
       const currentStates: Array<State<any>> = [];
       const listener = state => {
         currentStates.push(state);
@@ -104,7 +109,7 @@ describe('interpreter', () => {
         clock: new SimulatedClock()
       }).onTransition(listener);
       const clock = service.clock as SimulatedClock;
-      service.start();
+      await service.start();
 
       clock.increment(5);
       assert.equal(
@@ -183,7 +188,7 @@ describe('interpreter', () => {
         })
         .start();
 
-      delayExprService.send({
+      await delayExprService.send({
         type: 'ACTIVATE',
         wait: 50
       });
@@ -225,22 +230,22 @@ describe('interpreter', () => {
       }
     );
 
-    it('should start activities', () => {
+    it('should start activities', async () => {
       const service = interpret(activityMachine);
 
-      service.start();
+      await service.start();
 
       assert.equal(activityState, 'on');
     });
 
-    it('should stop activities', () => {
+    it('should stop activities', async () => {
       const service = interpret(activityMachine);
 
-      service.start();
+      await service.start();
 
       assert.equal(activityState, 'on');
 
-      service.send('TURN_OFF');
+      await service.send('TURN_OFF');
 
       assert.equal(activityState, 'off');
     });
@@ -282,7 +287,7 @@ describe('interpreter', () => {
     });
   });
 
-  it('can cancel a delayed event', () => {
+  it('can cancel a delayed event', async () => {
     let currentState: State<any>;
     const listener = state => (currentState = state);
 
@@ -290,10 +295,10 @@ describe('interpreter', () => {
       clock: new SimulatedClock()
     }).onTransition(listener);
     const clock = service.clock as SimulatedClock;
-    service.start();
+    await service.start();
 
     clock.increment(5);
-    service.send('KEEP_GOING');
+    await service.send('KEEP_GOING');
 
     assert.deepEqual(currentState!.value, 'green');
     clock.increment(10);
@@ -309,7 +314,7 @@ describe('interpreter', () => {
 
     let error;
     try {
-      service.send('SOME_EVENT');
+      await service.send('SOME_EVENT');
     } catch (err) {
       error = err;
     }
@@ -319,7 +324,7 @@ describe('interpreter', () => {
     await service.start();
 
     try {
-      service.send('SOME_EVENT');
+      await service.send('SOME_EVENT');
     } catch (err) {
       error = err;
     }
@@ -361,12 +366,12 @@ describe('interpreter', () => {
     }).onTransition(s => (state = s));
 
     await service.start();
-    service.send('TIMER'); // yellow
+    await service.send('TIMER'); // yellow
     assert.deepEqual(state.value, 'yellow');
 
     service.stop();
     try {
-      service.send('TIMER'); // red if interpreter is not stopped
+      await service.send('TIMER'); // red if interpreter is not stopped
     } catch (e) {
       assert.deepEqual(state.value, 'yellow');
     }
@@ -397,8 +402,8 @@ describe('interpreter', () => {
       logger: msg => logs.push(msg)
     }).start();
 
-    service.send('LOG');
-    service.send('LOG');
+    await service.send('LOG');
+    await service.send('LOG');
 
     assert.lengthOf(logs, 2);
     assert.deepEqual(logs, [{ count: 1 }, { count: 2 }]);
@@ -534,7 +539,7 @@ describe('interpreter', () => {
         .start();
     });
 
-    it('actions should be able to be executed manually with execute()', async done => {
+    it('actions should be able to be executed manually with execute()', done => {
       let effect = false;
 
       const machine = Machine({
@@ -553,18 +558,20 @@ describe('interpreter', () => {
         }
       });
 
-      const service = await interpret(machine, { execute: false })
-        .onTransition(state => {
-          setTimeout(() => {
-            service.execute(state);
-            assert.isTrue(effect);
-            done();
-          }, 10);
-        })
-        .onDone(() => {
-          assert.isFalse(effect);
-        })
-        .start();
+      (async () => {
+        const service = await interpret(machine, { execute: false })
+          .onTransition(state => {
+            setTimeout(async () => {
+              await service.execute(state);
+              assert.isTrue(effect);
+              done();
+            }, 10);
+          })
+          .onDone(() => {
+            assert.isFalse(effect);
+          })
+          .start();
+      })();
     });
   });
 });

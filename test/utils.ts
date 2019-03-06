@@ -7,22 +7,22 @@ export async function testMultiTransition<TExt>(
   fromState: string,
   eventTypes: string
 ) {
-  const resultState = (await eventTypes
-    .split(/,\s?/)
-    .reduce(async (state: Promise<State<TExt> | string>, eventType) => {
-      if (typeof state === 'string' && state[0] === '{') {
-        state = JSON.parse(state);
-      }
-      const nextState = await machine.transition(await state, eventType);
-      return nextState;
-    }, Promise.resolve(fromState))) as State<TExt>;
+  let resultState: string | State<TExt> = fromState;
+  for (const eventType of eventTypes.split(/,\s?/)) {
+    if (typeof resultState === 'string' && resultState[0] === '{') {
+      resultState = JSON.parse(resultState);
+    }
+    resultState = (await machine.transition(resultState, eventType)) as State<
+      TExt
+    >;
+  }
 
-  return resultState;
+  return resultState as State<TExt>;
 }
 
 export function testAll(machine: StateNode, expected: {}): void {
-  Object.keys(expected).forEach(fromState => {
-    Object.keys(expected[fromState]).forEach(eventTypes => {
+  for (const fromState of Object.keys(expected)) {
+    for (const eventTypes of Object.keys(expected[fromState])) {
       const toState = expected[fromState][eventTypes];
 
       it(`should go from ${fromState} to ${JSON.stringify(
@@ -47,6 +47,6 @@ export function testAll(machine: StateNode, expected: {}): void {
           assert.deepEqual(resultState.value, toState);
         }
       });
-    });
-  });
+    }
+  }
 }

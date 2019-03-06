@@ -239,11 +239,11 @@ describe('invoke', () => {
       })
       .start();
 
-    service.send('FORWARD_DEC');
+    await service.send('FORWARD_DEC');
   });
 
   it('should start services (explicit machine, invoke = config)', async done => {
-    (await interpret(fetcherMachine)
+    await (await interpret(fetcherMachine)
       .onDone(() => {
         done();
       })
@@ -251,14 +251,14 @@ describe('invoke', () => {
   });
 
   it('should start services (explicit machine, invoke = machine)', async done => {
-    (await interpret(fetcherMachine)
+    await (await interpret(fetcherMachine)
       .onDone(_ => {
         done();
       })
       .start()).send('GO_TO_WAITING_MACHINE');
   });
 
-  it('should use the service overwritten by withConfig', done => {
+  it('should use the service overwritten by withConfig', async done => {
     const childMachine = Machine({
       id: 'child',
       initial: 'init',
@@ -295,7 +295,7 @@ describe('invoke', () => {
       }
     );
 
-    interpret(
+    await interpret(
       someParentMachine.withConfig({
         services: {
           child: Machine({
@@ -332,7 +332,7 @@ describe('invoke', () => {
 
     // console.dir(mainMachine.activities, { depth: null });
 
-    it('should communicate with the child machine (invoke on machine)', done => {
+    it('should communicate with the child machine (invoke on machine)', async done => {
       const mainMachine = Machine({
         id: 'parent',
         initial: 'one',
@@ -351,14 +351,14 @@ describe('invoke', () => {
         }
       });
 
-      interpret(mainMachine)
+      await interpret(mainMachine)
         .onDone(() => {
           done();
         })
         .start();
     });
 
-    it('should communicate with the child machine (invoke on created machine)', done => {
+    it('should communicate with the child machine (invoke on created machine)', async done => {
       interface MainMachineCtx {
         machine: typeof subMachine;
       }
@@ -384,14 +384,14 @@ describe('invoke', () => {
         }
       });
 
-      interpret(mainMachine)
+      await interpret(mainMachine)
         .onDone(() => {
           done();
         })
         .start();
     });
 
-    it('should communicate with the child machine (invoke on state)', done => {
+    it('should communicate with the child machine (invoke on state)', async done => {
       const mainMachine = Machine({
         id: 'parent',
         initial: 'one',
@@ -410,7 +410,7 @@ describe('invoke', () => {
         }
       });
 
-      interpret(mainMachine)
+      await interpret(mainMachine)
         .onDone(() => {
           done();
         })
@@ -455,19 +455,21 @@ describe('invoke', () => {
       }
     });
 
-    it('should be invoked with a promise factory and resolve through onDone', done => {
-      interpret(invokePromiseMachine)
+    it('should be invoked with a promise factory and resolve through onDone', async done => {
+      await interpret(invokePromiseMachine)
         .onDone(() => done())
         .start();
     });
 
-    it('should be invoked with a promise factory and reject with ErrorExecution', done => {
-      interpret(invokePromiseMachine.withContext({ id: 31, succeed: false }))
+    it('should be invoked with a promise factory and reject with ErrorExecution', async done => {
+      await interpret(
+        invokePromiseMachine.withContext({ id: 31, succeed: false })
+      )
         .onDone(() => done())
         .start();
     });
 
-    it('should be invoked with a promise factory and resolve through onDone for compound state nodes', done => {
+    it('should be invoked with a promise factory and resolve through onDone for compound state nodes', async done => {
       const promiseMachine = Machine({
         id: 'promise',
         initial: 'parent',
@@ -493,12 +495,12 @@ describe('invoke', () => {
         }
       });
 
-      interpret(promiseMachine)
+      await interpret(promiseMachine)
         .onDone(() => done())
         .start();
     });
 
-    it('should be invoked with a promise service and resolve through onDone for compound state nodes', done => {
+    it('should be invoked with a promise service and resolve through onDone for compound state nodes', async done => {
       const promiseMachine = Machine(
         {
           id: 'promise',
@@ -531,7 +533,7 @@ describe('invoke', () => {
         }
       );
 
-      interpret(promiseMachine)
+      await interpret(promiseMachine)
         .onDone(() => done())
         .start();
     });
@@ -601,7 +603,7 @@ describe('invoke', () => {
         .start();
     });
 
-    it('should provide the resolved data when invoked with a promise factory', done => {
+    it('should provide the resolved data when invoked with a promise factory', async done => {
       let count = 0;
 
       const promiseMachine = Machine({
@@ -626,7 +628,7 @@ describe('invoke', () => {
         }
       });
 
-      interpret(promiseMachine)
+      await interpret(promiseMachine)
         .onDone(() => {
           assert.equal(count, 1);
           done();
@@ -634,7 +636,7 @@ describe('invoke', () => {
         .start();
     });
 
-    it('should provide the resolved data when invoked with a promise service', done => {
+    it('should provide the resolved data when invoked with a promise service', async done => {
       let count = 0;
 
       const promiseMachine = Machine(
@@ -665,7 +667,7 @@ describe('invoke', () => {
         }
       );
 
-      interpret(promiseMachine)
+      await interpret(promiseMachine)
         .onDone(() => {
           assert.equal(count, 1);
           done();
@@ -673,7 +675,7 @@ describe('invoke', () => {
         .start();
     });
 
-    it('should work with invocations defined in orthogonal state nodes', done => {
+    it('should work with invocations defined in orthogonal state nodes', async done => {
       const pongMachine = Machine({
         id: 'pong',
         initial: 'active',
@@ -710,7 +712,7 @@ describe('invoke', () => {
         }
       });
 
-      interpret(pingMachine)
+      await interpret(pingMachine)
         .onDone(() => {
           done();
         })
@@ -749,7 +751,7 @@ describe('invoke', () => {
         }
       );
 
-      (await interpret(promiseMachine)
+      await (await interpret(promiseMachine)
         .onDone(() => done())
         .start()).send({ type: 'BEGIN', payload: true });
     });
@@ -793,7 +795,7 @@ describe('invoke', () => {
         }
       );
 
-      (await interpret(callbackMachine)
+      await (await interpret(callbackMachine)
         .onDone(() => done())
         .start()).send({ type: 'BEGIN', payload: true });
     });
@@ -821,10 +823,10 @@ describe('invoke', () => {
         .start();
 
       // waits 50 milliseconds before going to final state.
-      service.send('SKIP');
+      await service.send('SKIP');
     });
 
-    it('callback should be able to receive messages from parent', done => {
+    it('callback should be able to receive messages from parent', async done => {
       const pingPongMachine = Machine({
         id: 'ping-pong',
         initial: 'active',
@@ -851,12 +853,12 @@ describe('invoke', () => {
         }
       });
 
-      interpret(pingPongMachine)
+      await interpret(pingPongMachine)
         .onDone(() => done())
         .start();
     });
 
-    it('should call onError upon error (sync)', done => {
+    it('should call onError upon error (sync)', async done => {
       const errorMachine = Machine({
         id: 'error',
         initial: 'safe',
@@ -880,12 +882,12 @@ describe('invoke', () => {
         }
       });
 
-      interpret(errorMachine)
+      await interpret(errorMachine)
         .onDone(() => done())
         .start();
     });
 
-    it('should call onError upon error (async)', done => {
+    it('should call onError upon error (async)', async done => {
       const errorMachine = Machine({
         id: 'asyncError',
         initial: 'safe',
@@ -910,7 +912,7 @@ describe('invoke', () => {
         }
       });
 
-      interpret(errorMachine)
+      await interpret(errorMachine)
         .onDone(() => done())
         .start();
     });
@@ -932,7 +934,7 @@ describe('invoke', () => {
       assert.isString(waitingState.actions[0].activity!.src);
     });
 
-    xit('should throw error if unhandled (sync)', done => {
+    xit('should throw error if unhandled (sync)', async done => {
       const errorMachine = Machine({
         id: 'asyncError',
         initial: 'safe',
@@ -950,12 +952,12 @@ describe('invoke', () => {
         }
       });
 
-      interpret(errorMachine)
+      await interpret(errorMachine)
         .onDone(() => done())
         .start();
     });
 
-    xit('should throw error if unhandled (async)', done => {
+    xit('should throw error if unhandled (async)', async done => {
       const errorMachine = Machine({
         id: 'asyncError',
         initial: 'safe',
@@ -974,7 +976,7 @@ describe('invoke', () => {
         }
       });
 
-      interpret(errorMachine)
+      await interpret(errorMachine)
         .onDone(() => done())
         .start();
     });
@@ -1032,7 +1034,7 @@ describe('invoke', () => {
           })
           .start();
 
-        service.send('STOPCHILD');
+        await service.send('STOPCHILD');
       });
     });
   });
@@ -1082,8 +1084,8 @@ describe('invoke', () => {
       }
     });
 
-    it('should create invocations from machines in nested states', done => {
-      interpret(pingMachine)
+    it('should create invocations from machines in nested states', async done => {
+      await interpret(pingMachine)
         .onDone(() => done())
         .start();
     });
@@ -1136,13 +1138,13 @@ describe('invoke', () => {
       }
     });
 
-    it('should start all services at once', done => {
+    it('should start all services at once', async done => {
       const service = interpret(multiple).onDone(() => {
         assert.deepEqual(service.state.context, { one: 'one', two: 'two' });
         done();
       });
 
-      service.start();
+      await service.start();
     });
 
     const parallel = Machine({
@@ -1195,13 +1197,13 @@ describe('invoke', () => {
       }
     });
 
-    it('should run services in parallel', done => {
+    it('should run services in parallel', async done => {
       const service = interpret(parallel).onDone(() => {
         assert.deepEqual(service.state.context, { one: 'one', two: 'two' });
         done();
       });
 
-      service.start();
+      await service.start();
     });
   });
 });

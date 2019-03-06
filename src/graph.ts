@@ -202,7 +202,6 @@ export class ValueAdjacency<TContext, TEvent extends EventObject> {
     public machine: StateMachine<TContext, any, TEvent>,
     options?: Partial<ValueAdjMapOptions<TContext, TEvent>>
   ) {
-    console.log('valueadjacency constructor');
     this._machine = machine;
     this.options = {
       events: {},
