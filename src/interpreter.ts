@@ -210,7 +210,7 @@ export class Interpreter<
   /**
    * The initial state of the statechart.
    */
-  public get initialState(): State<TContext, TEvent> {
+  public get initialState(): Promise<State<TContext, TEvent>> {
     return this.machine.initialState;
   }
   /**
@@ -352,12 +352,15 @@ export class Interpreter<
    * Starts the interpreter from the given state, or the initial state.
    * @param initialState The state to start the statechart from
    */
-  public start(
-    initialState: State<TContext, TEvent> = this.machine.initialState as State<
-      TContext,
-      TEvent
-    >
-  ): Interpreter<TContext, TStateSchema, TEvent> {
+  public async start(
+    initialState?: State<TContext, TEvent>
+  ): Promise<Interpreter<TContext, TStateSchema, TEvent>> {
+    if (initialState === undefined) {
+      initialState = (await this.machine.initialState) as State<
+        TContext,
+        TEvent
+      >;
+    }
     this.initialized = true;
     if (this.options.devTools) {
       this.attachDev();
@@ -401,9 +404,11 @@ export class Interpreter<
    *
    * @param event The event to send
    */
-  public send = (event: OmniEvent<TEvent>): State<TContext, TEvent> => {
+  public send = async (
+    event: OmniEvent<TEvent>
+  ): Promise<State<TContext, TEvent>> => {
     const eventObject = toEventObject<OmniEventObject<TEvent>>(event);
-    const nextState = this.nextState(eventObject);
+    const nextState = await this.nextState(eventObject);
 
     this.update(nextState, event);
 
@@ -425,7 +430,7 @@ export class Interpreter<
     }
 
     return sender.bind(this);
-  }
+  };
 
   public sendTo = (event: OmniEventObject<TEvent>, to: string) => {
     const isParent = to === SpecialTargets.Parent;
@@ -449,7 +454,7 @@ export class Interpreter<
     setTimeout(() => {
       target.send(event);
     });
-  }
+  };
   /**
    * Returns the next state given the interpreter's current state and the event.
    *
@@ -457,7 +462,9 @@ export class Interpreter<
    *
    * @param event The event to determine the next state
    */
-  public nextState(event: OmniEvent<TEvent>): State<TContext, TEvent> {
+  public async nextState(
+    event: OmniEvent<TEvent>
+  ): Promise<State<TContext, TEvent>> {
     const eventObject = toEventObject<OmniEventObject<TEvent>>(event);
 
     if (!this.initialized) {
@@ -479,7 +486,7 @@ export class Interpreter<
       throw (eventObject as ErrorExecutionEvent).data;
     }
 
-    const nextState = this.machine.transition(
+    const nextState = await this.machine.transition(
       this.state,
       eventObject,
       this.state.context

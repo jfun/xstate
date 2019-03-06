@@ -531,16 +531,19 @@ class StateNode<
     });
   }
 
-  private transitionLeafNode(
+  private async transitionLeafNode(
     stateValue: string,
     state: State<TContext, TEvent>,
     eventObject: OmniEventObject<TEvent>
-  ): StateTransition<TContext, TEvent> {
+  ): Promise<StateTransition<TContext, TEvent>> {
     const stateNode = this.getStateNode(stateValue);
-    const next = stateNode.next(state, eventObject);
+    const next = await stateNode.next(state, eventObject);
 
     if (!next.tree) {
-      const { reentryStates, actions, tree } = this.next(state, eventObject);
+      const { reentryStates, actions, tree } = await this.next(
+        state,
+        eventObject
+      );
 
       return {
         tree,
@@ -552,22 +555,25 @@ class StateNode<
 
     return next;
   }
-  private transitionCompoundNode(
+  private async transitionCompoundNode(
     stateValue: StateValueMap,
     state: State<TContext, TEvent>,
     eventObject: OmniEventObject<TEvent>
-  ): StateTransition<TContext, TEvent> {
+  ): Promise<StateTransition<TContext, TEvent>> {
     const subStateKeys = keys(stateValue);
 
     const stateNode = this.getStateNode(subStateKeys[0]);
-    const next = stateNode._transition(
+    const next = await stateNode._transition(
       stateValue[subStateKeys[0]],
       state,
       eventObject
     );
 
     if (!next.tree) {
-      const { reentryStates, actions, tree } = this.next(state, eventObject);
+      const { reentryStates, actions, tree } = await this.next(
+        state,
+        eventObject
+      );
 
       return {
         tree,
@@ -579,15 +585,15 @@ class StateNode<
 
     return next;
   }
-  private transitionParallelNode(
+  private async transitionParallelNode(
     stateValue: StateValueMap,
     state: State<TContext, TEvent>,
     eventObject: OmniEventObject<TEvent>
-  ): StateTransition<TContext, TEvent> {
+  ): Promise<StateTransition<TContext, TEvent>> {
     const noTransitionKeys: string[] = [];
     const transitionMap: Record<string, StateTransition<TContext, TEvent>> = {};
 
-    keys(stateValue).forEach(subStateKey => {
+    keys(stateValue).forEach(async subStateKey => {
       const subStateValue = stateValue[subStateKey];
 
       if (!subStateValue) {
@@ -596,7 +602,11 @@ class StateNode<
 
       const subStateNode = this.getStateNode(subStateKey);
 
-      const next = subStateNode._transition(subStateValue, state, eventObject);
+      const next = await subStateNode._transition(
+        subStateValue,
+        state,
+        eventObject
+      );
 
       if (!next.tree) {
         noTransitionKeys.push(subStateKey);
@@ -610,7 +620,10 @@ class StateNode<
     );
 
     if (!willTransition) {
-      const { reentryStates, actions, tree } = this.next(state, eventObject);
+      const { reentryStates, actions, tree } = await this.next(
+        state,
+        eventObject
+      );
 
       return {
         tree,
@@ -691,28 +704,33 @@ class StateNode<
       )
     };
   }
-  private _transition(
+  private async _transition(
     stateValue: StateValue,
     state: State<TContext, TEvent>,
     event: OmniEventObject<TEvent>
-  ): StateTransition<TContext, TEvent> {
+  ): Promise<StateTransition<TContext, TEvent>> {
+    console.log('stateValue', stateValue);
+    console.log('event', event);
     // leaf node
     if (typeof stateValue === 'string') {
+      console.log('>>: leaf node');
       return this.transitionLeafNode(stateValue, state, event);
     }
 
     // hierarchical node
     if (keys(stateValue).length === 1) {
+      console.log('>>: compound node');
       return this.transitionCompoundNode(stateValue, state, event);
     }
 
     // orthogonal node
+    console.log('>>: orthogonal node');
     return this.transitionParallelNode(stateValue, state, event);
   }
-  private next(
+  private async next(
     state: State<TContext, TEvent>,
     eventObject: OmniEventObject<TEvent>
-  ): StateTransition<TContext, TEvent> {
+  ): Promise<StateTransition<TContext, TEvent>> {
     const eventType = eventObject.type;
     const candidates = this.on[eventType];
     const actions: Array<ActionObject<TContext, TEvent>> = this.transient
@@ -753,12 +771,12 @@ class StateNode<
 
       if (
         (!cond ||
-          this.evaluateGuard(
+          (await this.evaluateGuard(
             cond,
             resolvedContext,
             eventObject,
             state.value
-          )) &&
+          ))) &&
         isInState
       ) {
         nextStateStrings = toArray(candidate.target);
@@ -868,12 +886,12 @@ class StateNode<
 
     return true;
   }
-  private evaluateGuard(
+  private async evaluateGuard(
     condition: Condition<TContext, TEvent>,
     context: TContext,
     eventObject: OmniEventObject<TEvent>,
     interimState: StateValue
-  ): boolean {
+  ): Promise<boolean> {
     let condFn: ConditionPredicate<TContext, OmniEventObject<TEvent>>;
     const { guards } = this.machine.options;
 
@@ -891,7 +909,7 @@ class StateNode<
       condFn = condition;
     }
 
-    return condFn(context, eventObject, interimState);
+    return await condFn(context, eventObject, interimState);
   }
 
   /**
@@ -1002,11 +1020,11 @@ class StateNode<
    * @param event The event that was sent at the current state
    * @param context The current context (extended state) of the current state
    */
-  public transition(
+  public async transition(
     state: StateValue | State<TContext, TEvent>,
     event: OmniEvent<TEvent>,
     context?: TContext
-  ): State<TContext, TEvent> {
+  ): Promise<State<TContext, TEvent>> {
     const resolvedStateValue =
       typeof state === 'string'
         ? this.resolve(pathToStateValue(this.getResolvedPath(state)))
@@ -1034,7 +1052,9 @@ class StateNode<
       resolvedContext
     );
 
-    const stateTransition = this._transition(
+    console.log('currentState', currentState.value);
+
+    const stateTransition = await this._transition(
       currentState.value,
       currentState,
       eventObject
@@ -1051,11 +1071,11 @@ class StateNode<
       eventObject
     );
   }
-  private resolveTransition(
+  private async resolveTransition(
     stateTransition: StateTransition<TContext, TEvent>,
     currentState: State<TContext, TEvent>,
     eventObject: OmniEventObject<TEvent>
-  ): State<TContext, TEvent> {
+  ): Promise<State<TContext, TEvent>> {
     const resolvedStateValue = stateTransition.tree
       ? stateTransition.tree.value
       : undefined;
@@ -1184,7 +1204,7 @@ class StateNode<
     while (raisedEvents.length) {
       const currentActions = maybeNextState.actions;
       const raisedEvent = raisedEvents.shift()!;
-      maybeNextState = this.transition(
+      maybeNextState = await this.transition(
         maybeNextState,
         raisedEvent.type === actionTypes.nullEvent
           ? NULL_EVENT
@@ -1460,7 +1480,7 @@ class StateNode<
    * The initial State instance, which includes all actions to be executed from
    * entering the initial state.
    */
-  public get initialState(): State<TContext, TEvent> {
+  public get initialState(): Promise<State<TContext, TEvent>> {
     const { initialStateValue } = this;
 
     if (!initialStateValue) {
