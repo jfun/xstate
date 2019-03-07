@@ -1,7 +1,7 @@
 {
-  "name": "xstate",
+  "name": "xstate-async",
   "version": "4.3.3",
-  "description": "Finite State Machines and Statecharts for the Modern Web.",
+  "description": "An async fork of xstate.",
   "main": "lib/index.js",
   "module": "es/index.js",
   "types": "lib/index.d.ts",
@@ -44,14 +44,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/davidkpiano/xstate.git"
+    "url": "git+https://github.com/jfun/xstate.git"
   },
-  "author": "David Khourshid <davidkpiano@gmail.com>",
+  "author": "John Phung <john@hevkt.org>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/davidkpiano/xstate/issues"
+    "url": "https://github.com/jfun/xstate/issues"
   },
-  "homepage": "https://github.com/davidkpiano/xstate#readme",
+  "homepage": "https://github.com/jfun/xstate#readme",
   "devDependencies": {
     "@types/chai": "^4.1.7",
     "@types/core-js": "^2.5.0",
