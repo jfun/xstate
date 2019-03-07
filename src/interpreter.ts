@@ -438,6 +438,7 @@ export class Interpreter<
     }
 
     return sender.bind(this);
+    // tslint:disable-next-line:semicolon
   };
 
   public sendTo = (event: OmniEventObject<TEvent>, to: string) => {
@@ -462,6 +463,7 @@ export class Interpreter<
     setTimeout(() => {
       target.send(event);
     });
+    // tslint:disable-next-line:semicolon
   };
   /**
    * Returns the next state given the interpreter's current state and the event.

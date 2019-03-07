@@ -166,18 +166,20 @@ describe('invoke', () => {
       }
     );
 
-    const service = interpret(someParentMachine)
-      .onDone(async () => {
+    /* tslint:disable-next-line:no-floating-promises */
+    (async () => {
+      const service = interpret(someParentMachine).onDone(() => {
         // 1. The 'parent' machine will enter 'start' state
         // 2. The 'child' service will be run with ID 'someService'
         // 3. The 'child' machine will enter 'init' state
         // 4. The 'onEntry' action will be executed, which sends 'INC' to 'parent' machine twice
         // 5. The context will be updated to increment count to 2
 
-        assert.deepEqual((await service).state.context, { count: 2 });
+        assert.deepEqual(service.state.context, { count: 2 });
         done();
-      })
-      .start();
+      });
+      await service.start();
+    })();
   });
 
   it('should forward events to services if forward: true', async () => {
@@ -229,7 +231,7 @@ describe('invoke', () => {
     );
 
     const service = await interpret(someParentMachine)
-      .onDone(async () => {
+      .onDone(() => {
         // 1. The 'parent' machine will not do anything (inert transition)
         // 2. The 'FORWARD_DEC' event will be forwarded to the 'child' machine (forward: true)
         // 3. On the 'child' machine, the 'FORWARD_DEC' event sends the 'DEC' action to the 'parent' thrice
@@ -242,23 +244,29 @@ describe('invoke', () => {
     await service.send('FORWARD_DEC');
   });
 
-  it('should start services (explicit machine, invoke = config)', async done => {
-    await (await interpret(fetcherMachine)
-      .onDone(() => {
-        done();
-      })
-      .start()).send('GO_TO_WAITING');
+  it('should start services (explicit machine, invoke = config)', done => {
+    // tslint:disable-next-line: no-floating-promises
+    (async () => {
+      await (await interpret(fetcherMachine)
+        .onDone(() => {
+          done();
+        })
+        .start()).send('GO_TO_WAITING');
+    })();
   });
 
-  it('should start services (explicit machine, invoke = machine)', async done => {
-    await (await interpret(fetcherMachine)
-      .onDone(_ => {
-        done();
-      })
-      .start()).send('GO_TO_WAITING_MACHINE');
+  it('should start services (explicit machine, invoke = machine)', done => {
+    // tslint:disable-next-line: no-floating-promises
+    (async () => {
+      await (await interpret(fetcherMachine)
+        .onDone(_ => {
+          done();
+        })
+        .start()).send('GO_TO_WAITING_MACHINE');
+    })();
   });
 
-  it('should use the service overwritten by withConfig', async done => {
+  it('should use the service overwritten by withConfig', done => {
     const childMachine = Machine({
       id: 'child',
       initial: 'init',
@@ -295,7 +303,8 @@ describe('invoke', () => {
       }
     );
 
-    await interpret(
+    // tslint:disable-next-line: no-floating-promises
+    interpret(
       someParentMachine.withConfig({
         services: {
           child: Machine({
@@ -332,7 +341,7 @@ describe('invoke', () => {
 
     // console.dir(mainMachine.activities, { depth: null });
 
-    it('should communicate with the child machine (invoke on machine)', async done => {
+    it('should communicate with the child machine (invoke on machine)', done => {
       const mainMachine = Machine({
         id: 'parent',
         initial: 'one',
@@ -351,14 +360,15 @@ describe('invoke', () => {
         }
       });
 
-      await interpret(mainMachine)
+      // tslint:disable-next-line: no-floating-promises
+      interpret(mainMachine)
         .onDone(() => {
           done();
         })
         .start();
     });
 
-    it('should communicate with the child machine (invoke on created machine)', async done => {
+    it('should communicate with the child machine (invoke on created machine)', done => {
       interface MainMachineCtx {
         machine: typeof subMachine;
       }
@@ -384,14 +394,16 @@ describe('invoke', () => {
         }
       });
 
-      await interpret(mainMachine)
+      // tslint:disable-next-line: no-floating-promises
+      // tslint:disable-next-line: no-floating-promises
+      interpret(mainMachine)
         .onDone(() => {
           done();
         })
         .start();
     });
 
-    it('should communicate with the child machine (invoke on state)', async done => {
+    it('should communicate with the child machine (invoke on state)', done => {
       const mainMachine = Machine({
         id: 'parent',
         initial: 'one',
@@ -410,7 +422,8 @@ describe('invoke', () => {
         }
       });
 
-      await interpret(mainMachine)
+      // tslint:disable-next-line: no-floating-promises
+      interpret(mainMachine)
         .onDone(() => {
           done();
         })
@@ -455,21 +468,21 @@ describe('invoke', () => {
       }
     });
 
-    it('should be invoked with a promise factory and resolve through onDone', async done => {
-      await interpret(invokePromiseMachine)
+    it('should be invoked with a promise factory and resolve through onDone', done => {
+      // tslint:disable-next-line: no-floating-promises
+      interpret(invokePromiseMachine)
         .onDone(() => done())
         .start();
     });
 
-    it('should be invoked with a promise factory and reject with ErrorExecution', async done => {
-      await interpret(
-        invokePromiseMachine.withContext({ id: 31, succeed: false })
-      )
+    it('should be invoked with a promise factory and reject with ErrorExecution', done => {
+      // tslint:disable-next-line: no-floating-promises
+      interpret(invokePromiseMachine.withContext({ id: 31, succeed: false }))
         .onDone(() => done())
         .start();
     });
 
-    it('should be invoked with a promise factory and resolve through onDone for compound state nodes', async done => {
+    it('should be invoked with a promise factory and resolve through onDone for compound state nodes', done => {
       const promiseMachine = Machine({
         id: 'promise',
         initial: 'parent',
@@ -495,12 +508,13 @@ describe('invoke', () => {
         }
       });
 
-      await interpret(promiseMachine)
+      // tslint:disable-next-line: no-floating-promises
+      interpret(promiseMachine)
         .onDone(() => done())
         .start();
     });
 
-    it('should be invoked with a promise service and resolve through onDone for compound state nodes', async done => {
+    it('should be invoked with a promise service and resolve through onDone for compound state nodes', done => {
       const promiseMachine = Machine(
         {
           id: 'promise',
@@ -533,12 +547,13 @@ describe('invoke', () => {
         }
       );
 
-      await interpret(promiseMachine)
+      // tslint:disable-next-line: no-floating-promises
+      interpret(promiseMachine)
         .onDone(() => done())
         .start();
     });
 
-    it('should assign the resolved data when invoked with a promise factory', async done => {
+    it('should assign the resolved data when invoked with a promise factory', done => {
       const promiseMachine = Machine({
         id: 'promise',
         context: { count: 0 },
@@ -559,15 +574,18 @@ describe('invoke', () => {
         }
       });
 
-      const service = await interpret(promiseMachine)
-        .onDone(() => {
-          assert.equal(service.state.context.count, 1);
-          done();
-        })
-        .start();
+      // tslint:disable-next-line: no-floating-promises
+      (async () => {
+        const service = await interpret(promiseMachine)
+          .onDone(() => {
+            assert.equal(service.state.context.count, 1);
+            done();
+          })
+          .start();
+      })();
     });
 
-    it('should assign the resolved data when invoked with a promise service', async done => {
+    it('should assign the resolved data when invoked with a promise service', done => {
       const promiseMachine = Machine(
         {
           id: 'promise',
@@ -595,15 +613,18 @@ describe('invoke', () => {
         }
       );
 
-      const service = await interpret(promiseMachine)
-        .onDone(() => {
-          assert.equal(service.state.context.count, 1);
-          done();
-        })
-        .start();
+      // tslint:disable-next-line: no-floating-promises
+      (async () => {
+        const service = await interpret(promiseMachine)
+          .onDone(() => {
+            assert.equal(service.state.context.count, 1);
+            done();
+          })
+          .start();
+      })();
     });
 
-    it('should provide the resolved data when invoked with a promise factory', async done => {
+    it('should provide the resolved data when invoked with a promise factory', done => {
       let count = 0;
 
       const promiseMachine = Machine({
@@ -628,7 +649,8 @@ describe('invoke', () => {
         }
       });
 
-      await interpret(promiseMachine)
+      // tslint:disable-next-line: no-floating-promises
+      interpret(promiseMachine)
         .onDone(() => {
           assert.equal(count, 1);
           done();
@@ -636,7 +658,7 @@ describe('invoke', () => {
         .start();
     });
 
-    it('should provide the resolved data when invoked with a promise service', async done => {
+    it('should provide the resolved data when invoked with a promise service', done => {
       let count = 0;
 
       const promiseMachine = Machine(
@@ -667,7 +689,8 @@ describe('invoke', () => {
         }
       );
 
-      await interpret(promiseMachine)
+      // tslint:disable-next-line: no-floating-promises
+      interpret(promiseMachine)
         .onDone(() => {
           assert.equal(count, 1);
           done();
@@ -675,7 +698,7 @@ describe('invoke', () => {
         .start();
     });
 
-    it('should work with invocations defined in orthogonal state nodes', async done => {
+    it('should work with invocations defined in orthogonal state nodes', done => {
       const pongMachine = Machine({
         id: 'pong',
         initial: 'active',
@@ -712,14 +735,15 @@ describe('invoke', () => {
         }
       });
 
-      await interpret(pingMachine)
+      // tslint:disable-next-line: no-floating-promises
+      interpret(pingMachine)
         .onDone(() => {
           done();
         })
         .start();
     });
 
-    it('should be able to specify a Promise as a service', async done => {
+    it('should be able to specify a Promise as a service', done => {
       const promiseMachine = Machine(
         {
           id: 'promise',
@@ -751,12 +775,15 @@ describe('invoke', () => {
         }
       );
 
-      await (await interpret(promiseMachine)
-        .onDone(() => done())
-        .start()).send({ type: 'BEGIN', payload: true });
+      // tslint:disable-next-line: no-floating-promises
+      (async () => {
+        await (await interpret(promiseMachine)
+          .onDone(() => done())
+          .start()).send({ type: 'BEGIN', payload: true });
+      })();
     });
 
-    it('should be able to specify a callback as a service', async done => {
+    it('should be able to specify a callback as a service', done => {
       const callbackMachine = Machine(
         {
           id: 'callback',
@@ -795,38 +822,45 @@ describe('invoke', () => {
         }
       );
 
-      await (await interpret(callbackMachine)
-        .onDone(() => done())
-        .start()).send({ type: 'BEGIN', payload: true });
+      // tslint:disable-next-line: no-floating-promises
+      (async () => {
+        await (await interpret(callbackMachine)
+          .onDone(() => done())
+          .start()).send({ type: 'BEGIN', payload: true });
+      })();
     });
   });
 
   describe('with callbacks', () => {
-    it('should treat a callback source as an event stream', async done => {
-      await interpret(intervalMachine)
+    it('should treat a callback source as an event stream', done => {
+      // tslint:disable-next-line: no-floating-promises
+      interpret(intervalMachine)
         .onDone(() => done())
         .start();
     });
 
-    it('should dispose of the callback (if disposal function provided)', async done => {
-      const service = await interpret(intervalMachine)
-        .onDone(() => {
-          // if intervalService isn't disposed after skipping, 'INC' event will
-          // keep being sent
-          assert.equal(
-            service.state.context.count,
-            0,
-            'should exit interval service before the first event is sent'
-          );
-          done();
-        })
-        .start();
+    it('should dispose of the callback (if disposal function provided)', done => {
+      // tslint:disable-next-line: no-floating-promises
+      (async () => {
+        const service = await interpret(intervalMachine)
+          .onDone(() => {
+            // if intervalService isn't disposed after skipping, 'INC' event will
+            // keep being sent
+            assert.equal(
+              service.state.context.count,
+              0,
+              'should exit interval service before the first event is sent'
+            );
+            done();
+          })
+          .start();
 
-      // waits 50 milliseconds before going to final state.
-      await service.send('SKIP');
+        // waits 50 milliseconds before going to final state.
+        await service.send('SKIP');
+      })();
     });
 
-    it('callback should be able to receive messages from parent', async done => {
+    it('callback should be able to receive messages from parent', done => {
       const pingPongMachine = Machine({
         id: 'ping-pong',
         initial: 'active',
@@ -853,12 +887,13 @@ describe('invoke', () => {
         }
       });
 
-      await interpret(pingPongMachine)
+      // tslint:disable-next-line: no-floating-promises
+      interpret(pingPongMachine)
         .onDone(() => done())
         .start();
     });
 
-    it('should call onError upon error (sync)', async done => {
+    it('should call onError upon error (sync)', done => {
       const errorMachine = Machine({
         id: 'error',
         initial: 'safe',
@@ -882,12 +917,13 @@ describe('invoke', () => {
         }
       });
 
-      await interpret(errorMachine)
+      // tslint:disable-next-line: no-floating-promises
+      interpret(errorMachine)
         .onDone(() => done())
         .start();
     });
 
-    it('should call onError upon error (async)', async done => {
+    it('should call onError upon error (async)', done => {
       const errorMachine = Machine({
         id: 'asyncError',
         initial: 'safe',
@@ -912,7 +948,8 @@ describe('invoke', () => {
         }
       });
 
-      await interpret(errorMachine)
+      // tslint:disable-next-line: no-floating-promises
+      interpret(errorMachine)
         .onDone(() => done())
         .start();
     });
@@ -934,7 +971,7 @@ describe('invoke', () => {
       assert.isString(waitingState.actions[0].activity!.src);
     });
 
-    xit('should throw error if unhandled (sync)', async done => {
+    xit('should throw error if unhandled (sync)', done => {
       const errorMachine = Machine({
         id: 'asyncError',
         initial: 'safe',
@@ -952,12 +989,13 @@ describe('invoke', () => {
         }
       });
 
-      await interpret(errorMachine)
+      // tslint:disable-next-line: no-floating-promises
+      interpret(errorMachine)
         .onDone(() => done())
         .start();
     });
 
-    xit('should throw error if unhandled (async)', async done => {
+    xit('should throw error if unhandled (async)', done => {
       const errorMachine = Machine({
         id: 'asyncError',
         initial: 'safe',
@@ -976,7 +1014,8 @@ describe('invoke', () => {
         }
       });
 
-      await interpret(errorMachine)
+      // tslint:disable-next-line: no-floating-promises
+      interpret(errorMachine)
         .onDone(() => done())
         .start();
     });
@@ -1017,24 +1056,27 @@ describe('invoke', () => {
         }
       });
 
-      it('ends on the completed state', async done => {
+      it('ends on the completed state', done => {
         const events: EventObject[] = [];
-        const service = await interpret(anotherParentMachine)
-          .onEvent(e => {
-            events.push(e);
-          })
-          .onDone(() => {
-            assert.deepEqual(events.map(e => e.type), [
-              actionTypes.init,
-              'STOPCHILD',
-              doneInvoke('invoked.child').type
-            ]);
-            assert.equal(service.state.value, 'completed');
-            done();
-          })
-          .start();
+        // tslint:disable-next-line: no-floating-promises
+        (async () => {
+          const service = await interpret(anotherParentMachine)
+            .onEvent(e => {
+              events.push(e);
+            })
+            .onDone(() => {
+              assert.deepEqual(events.map(e => e.type), [
+                actionTypes.init,
+                'STOPCHILD',
+                doneInvoke('invoked.child').type
+              ]);
+              assert.equal(service.state.value, 'completed');
+              done();
+            })
+            .start();
 
-        await service.send('STOPCHILD');
+          await service.send('STOPCHILD');
+        })();
       });
     });
   });
@@ -1084,8 +1126,9 @@ describe('invoke', () => {
       }
     });
 
-    it('should create invocations from machines in nested states', async done => {
-      await interpret(pingMachine)
+    it('should create invocations from machines in nested states', done => {
+      // tslint:disable-next-line: no-floating-promises
+      interpret(pingMachine)
         .onDone(() => done())
         .start();
     });
@@ -1138,13 +1181,16 @@ describe('invoke', () => {
       }
     });
 
-    it('should start all services at once', async done => {
-      const service = interpret(multiple).onDone(() => {
-        assert.deepEqual(service.state.context, { one: 'one', two: 'two' });
-        done();
-      });
+    it('should start all services at once', done => {
+      /* tslint:disable-next-line:no-floating-promises */
+      (async () => {
+        const service = interpret(multiple).onDone(() => {
+          assert.deepEqual(service.state.context, { one: 'one', two: 'two' });
+          done();
+        });
 
-      await service.start();
+        await service.start();
+      })();
     });
 
     const parallel = Machine({

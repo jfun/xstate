@@ -61,10 +61,10 @@ describe('Initial states', () => {
     });
   });
 
-  it('should return undefined for leaf nodes', () => {
+  it('should return undefined for leaf nodes', async () => {
     let error;
     try {
-      deepMachine.states.leaf.initialState;
+      await deepMachine.states.leaf.initialState;
     } catch (err) {
       error = err;
     }

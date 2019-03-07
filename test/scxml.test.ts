@@ -150,9 +150,7 @@ describe('scxml', () => {
   const testGroupKeys = Object.keys(testGroups);
   // const testGroupKeys = ['w3c-ecma'];
 
-  // testGroupKeys.forEach(testGroupName => {
   for (const testGroupName of testGroupKeys) {
-    // testGroups[testGroupName].forEach(testName => {
     for (const testName of testGroups[testGroupName]) {
       const scxmlSource =
         overrides[testGroupName] &&
